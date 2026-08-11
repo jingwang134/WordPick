@@ -15,6 +15,7 @@ WordPick 是一套**纯前端、零依赖**的英语学习应用：从 YouTube �
 | 📷 **看图学词** | AI 生成的**写实照片**（每张角度道具不同），名词看图认词 + 动词"看图→提问→点一下看答案" |
 | 🎬 **语料驱动** | 从 YouTube 双语字幕（SRT）提炼真实表达，**绝不手编**——语料就是唯一事实来源 |
 | 📥 **语料提炼中心** | 拖入 .srt 文件，前端自动解析中英对照 + 高频词统计，点词看例句上下文 |
+| 📋 **语料下载清单** | 内置 28 分类 × 109 场景的 YouTube 搜索关键词，勾选进度自动保存 |
 | 📥 **我的词库** | 导入自定义单词表、间隔重复复习（4 盒算法）、造句输出转积极词汇 |
 | 🎴 **卡片工坊** | 小红书风格词汇卡片，4 种配色，一键下载 PNG |
 
@@ -42,7 +43,6 @@ python -m http.server 8765
 ├── images.js               # 场景图片映射
 ├── images/                 # AI 生成的场景照片（写实风 JPG）
 │   └── look/               # 看图学词专属照片（每张角度/道具不同）
-├── corpus-wishlist.html    # YouTube 语料下载清单（28 分类 × 109 场景搜索词，可勾选进度）
 ├── parse_srt.py            # SRT 双语字幕解析工具（支持分类子文件夹，→ corpus/*.txt + summary.json）
 ├── analyze_corpus.py       # 词频 + 搭配分析工具（→ keywords.json）
 └── compress_images.py      # 图片批量压缩工具（PNG → JPG，GitHub 上传前使用）
@@ -52,8 +52,8 @@ python -m http.server 8765
 
 ```
 下载 YouTube 双语字幕 (.srt)
-    ↓ 放入 corpus-wishlist.html 对应的语料文件夹
-parse_srt.py       → 解析出中英句对（corpus/*.txt + summary.json）
+    ↓ 按应用内「📋 语料下载清单」的 28 个分类下载，丢进对应分类文件夹
+parse_srt.py       → 解析出中英句对（corpus/*.txt + summary.json），自动识别分类
 analyze_corpus.py  → 词频 + 搭配分析（keywords.json）
 人工/AI 提炼      → 生成 nouns[] + actions[] → 入库（life4.js / look.js）
 UI 标注            → 界面显示「🎬 真实语料」角标
