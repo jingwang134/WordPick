@@ -1,0 +1,2954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>拾词 WordPick · 真实场景学单词</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #e74c3c;
+    --primary-light: #ff6b6b;
+    --primary-dark: #c0392b;
+    --bg: #f7f9fc;
+    --panel: #ffffff;
+    --border: #e8ecf3;
+    --text: #2c3e50;
+    --text-light: #7f8c8d;
+    --text-soft: #95a5a6;
+    --shadow: 0 4px 24px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+    --success: #27ae60;
+    --warning: #f39c12;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { display: flex; height: 100vh; width: 100vw; }
+
+  /* ===== 侧边栏 ===== */
+  .sidebar {
+    width: 300px;
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .brand { padding: 16px 18px 12px; border-bottom: 1px solid var(--border); }
+  .brand-title { font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .brand-sub { font-size: 12px; color: var(--text-soft); margin-top: 3px; }
+
+  /* 主 tab 切换 */
+  .main-tabs { display: grid; grid-template-columns: repeat(4, 1fr); padding: 8px 10px; gap: 4px; }
+  .main-tab {
+    padding: 8px 4px; border: none; background: #f0f3f8; cursor: pointer; border-radius: 8px;
+    font-size: 11px; color: var(--text-light); font-weight: 600; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .main-tab .tab-emoji { font-size: 18px; }
+  .main-tab.active { background: var(--primary); color: white; box-shadow: 0 2px 8px rgba(231,76,60,0.2); }
+
+  /* 词库等级筛选 */
+  .level-switch { padding: 8px 12px 6px; }
+  .level-label { font-size: 11px; color: var(--text-soft); font-weight: 600; margin-bottom: 5px; letter-spacing: 0.5px; }
+  .level-chips { display: flex; gap: 5px; flex-wrap: wrap; }
+  .level-chip {
+    padding: 4px 9px; border: 1px solid var(--border); background: white; border-radius: 12px;
+    cursor: pointer; font-size: 11px; color: var(--text-light); font-weight: 500; transition: all 0.15s;
+  }
+  .level-chip:hover { border-color: var(--primary); color: var(--primary); }
+  .level-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  .list-header { padding: 6px 18px 4px; font-size: 11px; color: var(--text-soft); font-weight: 600; display: flex; justify-content: space-between; align-items: center; letter-spacing: 0.5px; }
+  .list-search {
+    margin: 0 12px 6px; padding: 7px 12px; background: #f0f3f8; border: none;
+    border-radius: 8px; font-size: 12px; outline: none; width: calc(100% - 24px);
+  }
+  .list-search:focus { background: #e8ecf3; }
+  .list { flex: 1; overflow-y: auto; padding: 0 8px 10px; }
+  .list-item {
+    padding: 9px 12px; border-radius: 9px; cursor: pointer; display: flex; align-items: center;
+    gap: 10px; transition: all 0.15s; margin-bottom: 3px;
+  }
+  .list-item:hover { background: #f0f3f8; }
+  .list-item.active { background: linear-gradient(135deg, #fff5f4 0%, #fff 100%); border: 1px solid #ffd5d0; }
+  .list-item-emoji { font-size: 17px; width: 22px; text-align: center; }
+  .list-item-body { flex: 1; min-width: 0; }
+  .list-item-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .list-item-sub { font-size: 10px; color: var(--text-soft); margin-top: 1px; }
+  .list-item-badge { background: #e8ecf3; color: var(--text-light); font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600; }
+  .list-item.active .list-item-badge { background: var(--primary); color: white; }
+  .list-item-empty { padding: 24px 16px; text-align: center; color: var(--text-soft); font-size: 12px; }
+
+  /* ===== 主区域 ===== */
+  .main { flex: 1; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar {
+    padding: 10px 20px; background: var(--panel); border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .topbar-title { font-size: 15px; font-weight: 600; white-space: nowrap; }
+  .topbar-title .accent { color: var(--primary); }
+  .level-tag { font-size: 11px; padding: 2px 9px; border-radius: 11px; font-weight: 600; white-space: nowrap; }
+  .level-tag.all { background: #f0f3f8; color: var(--text-light); }
+  .level-tag.CET4 { background: #e8f5e9; color: #2e7d32; }
+  .level-tag.CET6 { background: #fff3e0; color: #e65100; }
+  .level-tag.IELTS { background: #e3f2fd; color: #1565c0; }
+  .level-tag.TOEFL { background: #f3e5f5; color: #6a1b9a; }
+  .topbar-actions { display: flex; gap: 6px; align-items: center; }
+  .btn {
+    padding: 7px 12px; border: 1px solid var(--border); background: white; border-radius: 8px;
+    cursor: pointer; font-size: 12px; color: var(--text); display: inline-flex; align-items: center;
+    gap: 5px; transition: all 0.15s; font-weight: 500;
+  }
+  .btn:hover { background: #f7f9fc; border-color: #d0d5dd; }
+  .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
+  .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .pager { display: flex; align-items: center; gap: 5px; }
+  .pager-btn {
+    width: 28px; height: 28px; border: 1px solid var(--border); background: white; border-radius: 7px;
+    cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center;
+  }
+  .pager-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+  .pager-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .pager-info { font-size: 11px; color: var(--text-light); min-width: 38px; text-align: center; font-weight: 600; }
+
+  .mindmap-area { flex: 1; position: relative; overflow: hidden; background: radial-gradient(circle at center, #ffffff 0%, #f7f9fc 100%); }
+  .mindmap-svg { width: 100%; height: 100%; cursor: grab; }
+  .mindmap-svg.dragging { cursor: grabbing; }
+  .zoom-controls { position: absolute; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 6px; background: white; padding: 6px; border-radius: 10px; box-shadow: var(--shadow); }
+  .zoom-btn { width: 36px; height: 36px; border: none; background: white; border-radius: 6px; cursor: pointer; font-size: 18px; color: var(--text); display: flex; align-items: center; justify-content: center; }
+  .zoom-btn:hover { background: #f0f3f8; }
+  .empty-state { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-soft); text-align: center; padding: 40px; }
+  .empty-state-emoji { font-size: 70px; margin-bottom: 16px; opacity: 0.4; }
+  .empty-state-title { font-size: 19px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .empty-state-sub { font-size: 14px; max-width: 460px; line-height: 1.7; }
+  .stats { position: absolute; top: 16px; left: 20px; display: flex; gap: 10px; z-index: 5; }
+  .stat-card { background: white; padding: 7px 12px; border-radius: 9px; box-shadow: var(--shadow); font-size: 11px; border: 1px solid var(--border); }
+  .stat-value { font-size: 17px; font-weight: 700; color: var(--primary); }
+  .stat-label { color: var(--text-soft); font-size: 10px; }
+  .stat-card.success .stat-value { color: var(--success); }
+  .stat-card.warning .stat-value { color: var(--warning); }
+
+  /* ===== 详情面板（升级版） ===== */
+  .detail-panel {
+    position: absolute; top: 0; right: 0; width: 420px; height: 100%; background: white;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.08); transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 20; display: flex; flex-direction: column;
+  }
+  .detail-panel.open { transform: translateX(0); }
+  .detail-header { padding: 18px 22px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+  .detail-word { font-size: 28px; font-weight: 700; color: var(--text); }
+  .detail-phonetic { font-size: 14px; color: var(--text-light); margin-top: 2px; font-family: "Times New Roman", serif; }
+  .detail-meta { display: flex; gap: 5px; margin-top: 6px; flex-wrap: wrap; }
+  .level-badge { font-size: 10px; padding: 2px 9px; border-radius: 11px; font-weight: 600; }
+  .level-badge.CET4 { background: #e8f5e9; color: #2e7d32; }
+  .level-badge.CET6 { background: #fff3e0; color: #e65100; }
+  .level-badge.IELTS { background: #e3f2fd; color: #1565c0; }
+  .level-badge.TOEFL { background: #f3e5f5; color: #6a1b9a; }
+  .detail-close { background: #f0f3f8; border: none; width: 30px; height: 30px; border-radius: 7px; cursor: pointer; font-size: 17px; color: var(--text-light); display: flex; align-items: center; justify-content: center; }
+  .detail-body { flex: 1; overflow-y: auto; padding: 16px 22px; }
+  .detail-section { margin-bottom: 16px; }
+  .detail-section-title { font-size: 11px; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; display: flex; align-items: center; gap: 5px; }
+  .detail-pos { display: inline-block; background: #f0f3f8; color: var(--text); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 5px; }
+  .detail-meaning { font-size: 14px; line-height: 1.6; color: var(--text); }
+  .detail-example { background: #f7f9fc; padding: 10px 12px; border-radius: 9px; font-size: 13px; line-height: 1.6; color: var(--text); border-left: 3px solid var(--primary); }
+  .detail-example-en { font-weight: 500; }
+  .detail-example-cn { color: var(--text-light); font-size: 12px; margin-top: 3px; }
+  .detail-etymology { background: linear-gradient(135deg, #fff5f4 0%, #fff9f8 100%); padding: 12px; border-radius: 9px; border: 1px solid #ffe5e0; }
+  .etymology-breakdown { font-family: "Courier New", monospace; font-size: 14px; margin-bottom: 6px; color: var(--primary); font-weight: 600; }
+  .etymology-text { font-size: 12px; color: var(--text); line-height: 1.5; }
+
+  /* 词伙列表 */
+  .collo-list { display: flex; flex-direction: column; gap: 5px; }
+  .collo-item { padding: 7px 11px; background: #f0f7ff; border-radius: 7px; font-size: 13px; color: #1565c0; border-left: 2px solid #3498db; font-weight: 500; }
+
+  /* 同义替换 */
+  .syno-list { display: flex; flex-wrap: wrap; gap: 5px; }
+  .syno-item {
+    padding: 5px 10px; background: #fff3e0; border-radius: 7px; font-size: 12px;
+    color: #e65100; cursor: pointer; border: 1px solid transparent; transition: all 0.15s;
+  }
+  .syno-item:hover { border-color: #e65100; transform: translateY(-1px); }
+  .syno-item .syno-pos { color: var(--text-soft); font-size: 10px; margin-left: 3px; }
+
+  /* 熟词僻义 */
+  .pitfall { background: #f3e5f5; padding: 10px 12px; border-radius: 9px; font-size: 12px; line-height: 1.6; color: #6a1b9a; border-left: 3px solid #9b59b6; }
+  .pitfall strong { color: #6a1b9a; }
+
+  /* 复习盒状态 */
+  .review-box { display: flex; align-items: center; gap: 5px; padding: 8px 10px; background: #f7f9fc; border-radius: 8px; font-size: 12px; }
+  .review-dot { width: 10px; height: 10px; border-radius: 50%; background: #ddd; }
+  .review-dot.active { background: var(--primary); }
+
+  /* 造句区 */
+  .sentence-box { background: #fafbfc; padding: 10px; border-radius: 9px; border: 1px dashed var(--border); }
+  .sentence-textarea { width: 100%; min-height: 60px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; resize: vertical; outline: none; font-family: inherit; }
+  .sentence-textarea:focus { border-color: var(--primary); }
+  .sentence-actions { display: flex; gap: 6px; margin-top: 6px; }
+  .sentence-list { margin-top: 8px; }
+  .sentence-item { background: white; padding: 8px 10px; border-radius: 7px; margin-bottom: 5px; font-size: 12px; border: 1px solid var(--border); }
+  .sentence-item-en { color: var(--text); }
+  .sentence-item-time { color: var(--text-soft); font-size: 10px; margin-top: 2px; }
+
+  .detail-actions { padding: 12px 22px; border-top: 1px solid var(--border); display: flex; gap: 5px; background: #fafbfc; }
+  .review-btn {
+    flex: 1; padding: 8px 4px; border: 1px solid var(--border); background: white; border-radius: 7px;
+    cursor: pointer; font-size: 11px; font-weight: 600; transition: all 0.15s; color: var(--text-light);
+  }
+  .review-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+  .review-btn.b0 { color: #e74c3c; border-color: #e74c3c; }
+  .review-btn.b1 { color: #e67e22; border-color: #e67e22; }
+  .review-btn.b2 { color: #f1c40f; border-color: #f1c40f; }
+  .review-btn.b3 { color: #27ae60; border-color: #27ae60; }
+
+  /* ===== 图片/场景模式 ===== */
+  .image-mode-area { flex: 1; display: flex; overflow: hidden; }
+  .image-left { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+  .upload-card { background: white; border: 2px dashed var(--border); border-radius: 14px; padding: 30px; text-align: center; transition: all 0.2s; cursor: pointer; }
+  .upload-card:hover { border-color: var(--primary); background: #fff5f4; }
+  .upload-card.has-image { padding: 0; border: none; overflow: hidden; position: relative; aspect-ratio: 16/9; }
+  .upload-card.has-image img { width: 100%; height: 100%; object-fit: cover; }
+  .upload-emoji { font-size: 40px; margin-bottom: 8px; }
+  .upload-text { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .upload-hint { font-size: 11px; color: var(--text-soft); }
+  .upload-change { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; }
+  .scene-picker { background: white; padding: 14px; border-radius: 14px; box-shadow: var(--shadow); }
+  .scene-picker-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+  .scene-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .scene-chip { padding: 9px 6px; border: 1px solid var(--border); background: white; border-radius: 9px; cursor: pointer; text-align: center; transition: all 0.15s; font-size: 11px; }
+  .scene-chip:hover { border-color: var(--primary); background: #fff5f4; }
+  .scene-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .scene-chip-emoji { font-size: 20px; display: block; margin-bottom: 1px; }
+  .scene-chip-label { font-weight: 500; }
+  .scene-words { background: white; padding: 14px; border-radius: 14px; box-shadow: var(--shadow); flex: 1; min-height: 200px; }
+  .scene-words-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+  .word-cloud { display: flex; flex-wrap: wrap; gap: 6px; }
+  .word-chip { padding: 7px 12px; background: #f7f9fc; border-radius: 18px; cursor: pointer; font-size: 12px; border: 1px solid var(--border); transition: all 0.15s; }
+  .word-chip:hover { background: #fff5f4; border-color: var(--primary); transform: translateY(-1px); }
+  .word-chip .pos-mini { color: var(--text-soft); font-size: 10px; margin-left: 3px; }
+
+  /* ===== 我的词库 ===== */
+  .my-mode-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+  .my-header { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .my-stat { background: white; padding: 16px; border-radius: 12px; box-shadow: var(--shadow); }
+  .my-stat-value { font-size: 28px; font-weight: 700; color: var(--primary); }
+  .my-stat-label { font-size: 12px; color: var(--text-soft); margin-top: 4px; }
+  .my-section { background: white; padding: 18px; border-radius: 12px; box-shadow: var(--shadow); }
+  .my-section-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+  .my-words { display: flex; flex-wrap: wrap; gap: 6px; }
+  .my-empty { color: var(--text-soft); font-size: 13px; padding: 20px; text-align: center; }
+
+  .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text); color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; box-shadow: var(--shadow-lg); transition: transform 0.3s; z-index: 100; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* 导入弹窗 */
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: none; align-items: center; justify-content: center; }
+  .modal.open { display: flex; }
+  .modal-card { background: white; border-radius: 14px; width: 90%; max-width: 560px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: var(--shadow-lg); }
+  .modal-header { padding: 16px 22px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .modal-title { font-size: 17px; font-weight: 700; }
+  .modal-body { padding: 18px 22px; overflow-y: auto; flex: 1; }
+  .modal-hint { font-size: 12px; color: var(--text-soft); background: #f7f9fc; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; line-height: 1.6; }
+  .modal-hint code { background: #fff; padding: 1px 5px; border-radius: 3px; font-size: 11px; color: var(--primary); }
+  .modal-textarea { width: 100%; min-height: 240px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; resize: vertical; outline: none; font-family: "Courier New", monospace; }
+  .modal-textarea:focus { border-color: var(--primary); }
+  .modal-footer { padding: 12px 22px; border-top: 1px solid var(--border); display: flex; gap: 8px; justify-content: flex-end; }
+
+  @media (max-width: 900px) {
+    .sidebar { width: 240px; }
+    .detail-panel { width: 100%; }
+    .scene-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; height: 42vh; }
+    .main { height: 58vh; }
+    .my-header { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* ===== 卡片工坊 ===== */
+  .card-hero {
+    text-align: center;
+    padding: 18px 12px 14px;
+    border-radius: 18px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .card-hero-icon { font-size: 56px; line-height: 1; margin-bottom: 6px; }
+  .card-hero-title {
+    font-size: 32px;
+    font-weight: 800;
+    margin: 4px 0;
+    letter-spacing: 0.5px;
+  }
+  .card-hero-sub { font-size: 14px; opacity: 0.7; }
+  .card-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin: 16px 4px 8px;
+    opacity: 0.85;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-words {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .card-word {
+    background: rgba(255,255,255,0.65);
+    padding: 10px 12px;
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+  }
+  .card-word-en {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 1px;
+  }
+  .card-word-cn {
+    font-size: 11px;
+    color: #7f8c8d;
+  }
+  .card-action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .card-action {
+    background: rgba(255,255,255,0.7);
+    padding: 9px 12px;
+    border-radius: 11px;
+    font-size: 12px;
+    line-height: 1.5;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .card-action-icon { font-size: 18px; flex-shrink: 0; line-height: 1.2; }
+  .card-action-en { font-weight: 600; color: #2c3e50; }
+  .card-action-cn { color: #7f8c8d; font-size: 11px; }
+  .card-tip {
+    background: rgba(255,255,255,0.5);
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 11px;
+    text-align: center;
+    margin-top: 16px;
+    opacity: 0.7;
+  }
+  .card-deco {
+    position: absolute;
+    font-size: 28px;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .card-deco.d1 { top: 14px; left: 14px; }
+  .card-deco.d2 { top: 22px; right: 18px; }
+  .card-deco.d3 { bottom: 18px; left: 18px; }
+  .card-deco.d4 { bottom: 12px; right: 14px; }
+
+  /* ===== 卡片工坊悬浮按钮 + 全屏层 ===== */
+  .fab {
+    position: fixed; bottom: 28px; right: 28px; z-index: 150;
+    width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #ff6b6b, #e74c3c); color: white; font-size: 26px;
+    box-shadow: 0 8px 24px rgba(231,76,60,0.4); transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fab:hover { transform: scale(1.1); }
+  .card-overlay {
+    position: fixed; inset: 0; z-index: 300; background: var(--bg);
+    display: none; flex-direction: column;
+  }
+  .card-overlay.open { display: flex; }
+  .card-overlay-topbar {
+    padding: 12px 20px; background: white; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .card-overlay-body { flex: 1; display: flex; overflow: hidden; }
+  .card-overlay-left {
+    width: 360px; flex-shrink: 0; background: white; border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .cat-label { padding: 12px 16px 6px; font-size: 12px; color: var(--text-soft); font-weight: 600; letter-spacing: 0.5px; }
+  .cat-chips {
+    display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 16px 10px;
+    max-height: 170px; overflow-y: auto; border-bottom: 1px solid var(--border);
+  }
+  .cat-chip {
+    padding: 5px 10px; border: 1px solid var(--border); background: white; border-radius: 14px;
+    cursor: pointer; font-size: 11px; color: var(--text-light); transition: all 0.15s; font-weight: 500;
+  }
+  .cat-chip:hover { border-color: var(--primary); color: var(--primary); }
+  .cat-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .life-grid { flex: 1; overflow-y: auto; padding: 10px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-content: start; }
+  .life-card-item {
+    background: #fafbfc; border: 1px solid var(--border); border-radius: 10px; padding: 10px;
+    cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .life-card-item:hover { border-color: var(--primary); background: #fff5f4; transform: translateY(-1px); }
+  .life-card-item.active { border-color: var(--primary); background: #fff5f4; }
+  .life-card-emoji { font-size: 26px; display: block; margin-bottom: 4px; }
+  .life-card-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .life-card-sub { font-size: 10px; color: var(--text-soft); margin-top: 2px; }
+  .card-overlay-right { flex: 1; padding: 20px; overflow-y: auto; background: #eef1f6; display: flex; justify-content: center; align-items: flex-start; }
+
+  /* ===== 场景网格（含真实图片）+ 互动 viewer ===== */
+  .scene-mixed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+  .scene-card {
+    background: white; border: 1px solid var(--border); border-radius: 12px;
+    overflow: hidden; cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .scene-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); border-color: var(--primary); }
+  .scene-card-img-wrap { position: relative; padding-top: 62%; background: #f0f3f8; overflow: hidden; }
+  .scene-card-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s; }
+  .scene-card:hover .scene-card-img { transform: scale(1.05); }
+  .scene-card-emoji-overlay {
+    position: absolute; top: 6px; left: 6px; font-size: 24px; background: rgba(255,255,255,0.85);
+    border-radius: 10px; padding: 2px 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .scene-card-badge {
+    position: absolute; bottom: 6px; right: 6px; font-size: 9px; font-weight: 700;
+    padding: 3px 8px; border-radius: 10px; color: white;
+  }
+  .scene-card-badge.yt { background: rgba(231,76,60,0.9); }
+  .scene-card-badge.space { background: rgba(52,152,219,0.9); }
+  .scene-card-body { padding: 10px 12px 12px; }
+  .scene-card-name { font-size: 14px; font-weight: 700; color: var(--text); }
+  .scene-card-sub { font-size: 11px; color: var(--text-soft); margin-top: 3px; }
+
+  /* 场景 viewer（互动浏览：大图+词汇） */
+  .scene-viewer {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 250;
+    display: none; align-items: center; justify-content: center;
+    animation: fadeIn 0.2s;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .scene-viewer.open { display: flex; }
+  .scene-viewer-card {
+    background: white; border-radius: 16px; width: 92%; max-width: 920px; max-height: 90vh;
+    overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .scene-viewer-top {
+    padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex;
+    justify-content: space-between; align-items: center; background: #fafbfc;
+  }
+  .scene-viewer-body { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+  .scene-viewer-img {
+    width: 100%; max-height: 280px; object-fit: cover; display: block; background: #f0f3f8;
+  }
+  .scene-viewer-content { padding: 18px 22px 22px; }
+  .viewer-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .viewer-sub { font-size: 12px; color: var(--text-soft); margin-bottom: 14px; }
+  .viewer-section { margin-bottom: 16px; }
+  .viewer-section-title {
+    font-size: 12px; font-weight: 700; color: var(--text-soft); text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 8px;
+  }
+  .viewer-nouns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .viewer-noun { padding: 8px 10px; background: #f0f7ff; border-radius: 8px; font-size: 13px; color: #1565c0; border-left: 2px solid #3498db; }
+  .viewer-actions { display: flex; flex-direction: column; gap: 5px; }
+  .viewer-action { padding: 8px 10px; background: #fff3e0; border-radius: 8px; font-size: 12px; line-height: 1.5; color: #e65100; border-left: 2px solid #e67e22; }
+  .viewer-action .viewer-act-en { font-weight: 600; }
+  .viewer-words { display: flex; flex-wrap: wrap; gap: 6px; }
+  .viewer-word { padding: 7px 12px; background: #f0f3f8; border-radius: 16px; font-size: 12px; }
+
+  /* 场景 tab 子标签 */
+  .sub-tabs { display: flex; gap: 4px; }
+  .sub-tab {
+    padding: 6px 14px; border: 1px solid var(--border); background: white; border-radius: 16px;
+    cursor: pointer; font-size: 12px; color: var(--text-light); font-weight: 600; transition: all 0.15s;
+  }
+  .sub-tab.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  /* 生活细分场景视图 */
+  .life-view { flex: 1; padding: 18px; overflow-y: auto; }
+  .life-cat-section { margin-bottom: 22px; }
+  .life-cat-title {
+    font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+    color: var(--text);
+  }
+  .life-cat-count { font-size: 10px; color: var(--text-soft); font-weight: 500; }
+  .life-grid-wide { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .life-item {
+    background: white; border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+    cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .life-item:hover { border-color: var(--primary); box-shadow: var(--shadow); transform: translateY(-2px); }
+  .life-item-emoji { font-size: 32px; display: block; margin-bottom: 6px; }
+  .life-item-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .life-item-sub { font-size: 10px; color: var(--text-soft); margin-top: 3px; }
+
+  /* ===== 🎮 小游戏 ===== */
+  .game-pick { text-align: center; padding: 20px; }
+  .game-pick-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .game-pick-sub { font-size: 13px; color: var(--text-soft); margin-bottom: 20px; }
+  .game-pick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; max-width: 720px; margin: 0 auto; }
+  .game-pick-item {
+    background: white; border: 1px solid var(--border); border-radius: 12px; padding: 14px 8px;
+    cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .game-pick-item:hover { border-color: var(--primary); box-shadow: var(--shadow); transform: translateY(-2px); }
+  .game-pick-emoji { font-size: 30px; display: block; margin-bottom: 4px; }
+  .game-pick-name { font-size: 13px; font-weight: 600; }
+  .game-pick-count { font-size: 10px; color: var(--text-soft); margin-top: 2px; }
+
+  .game-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; max-width: 560px; width: 100%; }
+  .game-progress { font-size: 13px; color: var(--text-soft); font-weight: 600; }
+  .game-score { font-size: 13px; font-weight: 700; color: var(--success); }
+
+  .game-card-wrap { perspective: 1200px; width: 100%; max-width: 520px; }
+  .game-card {
+    position: relative; width: 100%; min-height: 400px; transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;
+  }
+  .game-card.flipped { transform: rotateY(180deg); }
+  .game-face {
+    position: absolute; inset: 0; backface-visibility: hidden; border-radius: 20px;
+    background: white; box-shadow: 0 12px 40px rgba(0,0,0,0.12); overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .game-face-front { transform: rotateY(0deg); }
+  .game-face-back { transform: rotateY(180deg); background: linear-gradient(160deg, #fff8f0 0%, #fff 100%); }
+  .game-face-img { width: 100%; height: 210px; object-fit: cover; background: #f0f3f8; display: flex; align-items: center; justify-content: center; }
+  .game-face-img img { width: 100%; height: 100%; object-fit: cover; }
+  .game-face-img .big-icon { font-size: 90px; }
+  .game-face-body { flex: 1; padding: 18px 22px; display: flex; flex-direction: column; justify-content: center; }
+  .game-type-tag { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 10px; align-self: flex-start; margin-bottom: 10px; }
+  .game-en { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1.3; margin-bottom: 6px; }
+  .game-cn { font-size: 16px; color: var(--text-light); margin-bottom: 10px; }
+  .game-ex { background: #f7f9fc; padding: 10px 12px; border-radius: 10px; font-size: 13px; line-height: 1.5; border-left: 3px solid var(--primary); }
+  .game-ex-en { font-weight: 500; }
+  .game-ex-cn { color: var(--text-light); font-size: 12px; margin-top: 2px; }
+  .game-hint { text-align: center; font-size: 11px; color: var(--text-soft); margin-top: 10px; }
+
+  .game-controls { display: flex; gap: 10px; justify-content: center; margin-top: 16px; max-width: 520px; width: 100%; }
+  .game-controls .btn { flex: 1; justify-content: center; padding: 12px; font-size: 15px; }
+
+  /* 测验 */
+  .quiz-wrap { width: 100%; max-width: 560px; }
+  .quiz-qnum { font-size: 13px; color: var(--text-soft); font-weight: 600; margin-bottom: 8px; text-align: center; }
+  .quiz-prompt { font-size: 15px; color: var(--text-light); text-align: center; margin-bottom: 4px; }
+  .quiz-question { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 18px; line-height: 1.4; }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-option {
+    padding: 13px 16px; border: 2px solid var(--border); border-radius: 12px; cursor: pointer;
+    font-size: 15px; font-weight: 600; background: white; transition: all 0.15s; text-align: left;
+  }
+  .quiz-option:hover:not(:disabled) { border-color: var(--primary); background: #fff5f4; }
+  .quiz-option.correct { border-color: var(--success); background: #e8f5e9; color: var(--success); }
+  .quiz-option.wrong { border-color: #e74c3c; background: #fdecea; color: #c0392b; }
+  .quiz-option:disabled { cursor: default; opacity: 0.75; }
+  .quiz-feedback { text-align: center; margin-top: 12px; font-size: 14px; font-weight: 600; min-height: 24px; }
+
+  /* 结果 */
+  .result-wrap { width: 100%; max-width: 460px; text-align: center; }
+  .result-emoji { font-size: 72px; margin-bottom: 10px; }
+  .result-title { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+  .result-score { font-size: 40px; font-weight: 800; color: var(--primary); margin: 10px 0; }
+  .result-sub { color: var(--text-soft); font-size: 14px; margin-bottom: 18px; }
+  .result-errors { background: #fdecea; border-radius: 12px; padding: 12px 16px; margin-bottom: 18px; text-align: left; }
+  .result-errors-title { font-size: 12px; font-weight: 700; color: #c0392b; margin-bottom: 8px; }
+  .result-error-item { font-size: 13px; padding: 3px 0; }
+  .result-error-item b { color: #c0392b; }
+  .result-actions { display: flex; gap: 10px; justify-content: center; }
+
+  /* ===== 📷 看图学词 ===== */
+  .look-section { background: white; border-radius: 14px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 16px; }
+  .look-section-title { font-size: 15px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .look-section-sub { font-size: 11px; color: var(--text-soft); font-weight: 400; margin-left: 6px; }
+  .look-scene-img { width: 100%; border-radius: 12px; display: block; margin-bottom: 14px; }
+  .look-nouns { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+  .look-noun {
+    padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+    transition: all 0.15s; background: #fafbfc;
+  }
+  .look-noun:hover { border-color: #3498db; background: #f0f7ff; transform: translateY(-1px); }
+  .look-noun-en { font-size: 14px; font-weight: 700; color: #1565c0; }
+  .look-noun-cn { font-size: 11px; color: var(--text-soft); margin-top: 2px; }
+
+  .look-verb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .look-verb-progress { font-size: 13px; color: var(--text-soft); font-weight: 600; }
+  .look-verb-img-wrap { position: relative; border-radius: 14px; overflow: hidden; margin-bottom: 14px; }
+  .look-verb-img { width: 100%; max-height: 380px; object-fit: cover; display: block; }
+  .look-question {
+    text-align: center; font-size: 22px; font-weight: 800; color: var(--text); margin: 10px 0 14px;
+    line-height: 1.4;
+  }
+  .look-reveal-btn {
+    display: block; margin: 0 auto 14px; padding: 13px 34px; font-size: 16px; font-weight: 700;
+    background: linear-gradient(135deg, #ff6b6b, #e74c3c); color: white; border: none; border-radius: 26px;
+    cursor: pointer; box-shadow: 0 6px 18px rgba(231,76,60,0.3); transition: all 0.15s;
+  }
+  .look-reveal-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(231,76,60,0.4); }
+  .look-answer {
+    background: linear-gradient(135deg, #e8f5e9, #f0faf1); border: 2px solid var(--success); border-radius: 14px;
+    padding: 16px 20px; text-align: center; margin-bottom: 14px; animation: popIn 0.3s;
+  }
+  @keyframes popIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .look-answer-en { font-size: 22px; font-weight: 800; color: var(--success); }
+  .look-answer-cn { font-size: 14px; color: var(--text-light); margin-top: 4px; }
+  .look-ex { margin-top: 10px; background: #f7f9fc; padding: 8px 12px; border-radius: 8px; font-size: 12px; text-align: left; line-height: 1.5; }
+  .look-ex-en { font-weight: 500; color: var(--text); }
+  .look-ex-cn { color: var(--text-light); font-size: 11px; margin-top: 2px; }
+  .look-tip { margin-top: 8px; font-size: 12px; color: #9b59b6; text-align: left; }
+  .look-verb-actions { display: flex; justify-content: center; }
+  .look-verb-actions .btn { padding: 11px 36px; font-size: 15px; }
+
+  /* ===== 🗺️ 场景探索（热点 + 延伸卡） ===== */
+  .look-view-tabs { display: flex; gap: 6px; margin-bottom: 14px; align-items: center; }
+  .look-view-tab { padding: 7px 16px; cursor: pointer; font-size: 13px; font-weight: 600; border-radius: 18px; background: white; border: 1.5px solid var(--border); color: var(--text-soft); transition: all 0.15s; }
+  .look-view-tab:hover { border-color: var(--primary); color: var(--primary); }
+  .look-view-tab.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 3px 10px rgba(231,76,60,0.3); }
+  .look-explore-wrap { display: flex; gap: 18px; align-items: stretch; min-height: 540px; }
+  .look-explore-img-wrap { flex: 1.5; position: relative; background: #000; border-radius: 14px; overflow: hidden; box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+  .look-explore-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .hotspot { position: absolute; width: 38px; height: 38px; transform: translate(-50%, -50%); background: rgba(231,76,60,0.95); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; animation: hotPulse 2s infinite; box-shadow: 0 0 0 6px rgba(231,76,60,0.25); border: 3px solid white; transition: all 0.15s; z-index: 2; }
+  .hotspot:hover { transform: translate(-50%, -50%) scale(1.15); background: rgba(231,76,60,1); }
+  .hotspot.active { animation: none; transform: translate(-50%, -50%) scale(1.25); background: var(--success); box-shadow: 0 0 0 8px rgba(46,204,113,0.3); }
+  .hotspot-num { position: absolute; top: -6px; right: -6px; background: white; color: var(--primary); font-size: 10px; font-weight: 700; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--primary); }
+  @keyframes hotPulse { 0%,100% { box-shadow: 0 0 0 6px rgba(231,76,60,0.25); } 50% { box-shadow: 0 0 0 16px rgba(231,76,60,0.05); } }
+  .look-explore-card { flex: 1; background: linear-gradient(135deg, #fafbfc 0%, #f0f3f8 100%); border-radius: 14px; padding: 18px; min-width: 340px; box-shadow: 0 4px 14px rgba(0,0,0,0.06); display: flex; flex-direction: column; }
+  .explore-card-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-soft); font-size: 14px; text-align: center; padding: 20px; }
+  .explore-card-empty .empty-emoji { font-size: 56px; margin-bottom: 12px; opacity: 0.5; }
+  .explore-card-head { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 2px solid #e5e8ed; margin-bottom: 14px; }
+  .explore-card-emoji { font-size: 36px; line-height: 1; }
+  .explore-card-en { font-size: 22px; font-weight: 800; color: var(--primary); line-height: 1.2; }
+  .explore-card-cn { font-size: 13px; color: var(--text-light); margin-top: 2px; }
+  .explore-tabs { display: flex; gap: 2px; margin-bottom: 12px; border-bottom: 1.5px solid #e5e8ed; }
+  .explore-tab { padding: 8px 12px; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-soft); border-bottom: 2px solid transparent; margin-bottom: -1.5px; transition: all 0.12s; white-space: nowrap; }
+  .explore-tab:hover { color: var(--primary); }
+  .explore-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .explore-tab-count { display: inline-block; background: #f0f3f8; color: var(--text-soft); padding: 0 5px; border-radius: 8px; font-size: 10px; margin-left: 3px; }
+  .explore-tab.active .explore-tab-count { background: var(--primary); color: white; }
+  .explore-content { flex: 1; overflow-y: auto; max-height: 420px; }
+  .use-item { background: white; border-radius: 10px; padding: 11px 14px; margin-bottom: 8px; border-left: 3px solid var(--primary); transition: transform 0.1s; }
+  .use-item:hover { transform: translateX(3px); }
+  .use-en { font-weight: 600; font-size: 14px; color: var(--text); }
+  .use-cn { font-size: 12px; color: var(--text-light); margin-top: 3px; }
+  .use-img-thumb { width: 80px; height: 50px; object-fit: cover; border-radius: 6px; margin-top: 8px; cursor: pointer; border: 1.5px solid #e5e8ed; }
+  .ex-item { background: white; border-radius: 10px; padding: 11px 14px; margin-bottom: 8px; border-left: 3px solid var(--success); }
+  .related-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
+  .related-chip { display: inline-flex; align-items: center; gap: 5px; padding: 7px 13px; background: white; border: 1.5px solid var(--primary); border-radius: 16px; font-size: 12px; color: var(--primary); cursor: pointer; font-weight: 600; transition: all 0.12s; }
+  .related-chip:hover { background: var(--primary); color: white; transform: translateY(-1px); }
+  .tip-box { background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); border-radius: 10px; padding: 14px 16px; color: #6a1b9a; font-size: 13px; line-height: 1.6; border-left: 4px solid #9b59b6; }
+  .empty-related { color: var(--text-soft); font-size: 12px; padding: 12px; text-align: center; background: #f7f9fc; border-radius: 8px; }
+
+  /* ===== 语料提炼中心 ===== */
+  .corpus-box { background:#fff; border:1.5px dashed #ffd9c0; border-radius:14px; padding:16px; margin-bottom:16px; }
+  .corpus-box.has-file { border-style:solid; border-color:#ffc39e; background:linear-gradient(135deg,#fffdf9 0%,#fff 100%); }
+  .corpus-head { display:flex; align-items:baseline; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .corpus-title { font-size:15px; font-weight:700; color:var(--text); }
+  .corpus-sub { font-size:11px; color:var(--text-soft); }
+  .corpus-drop { border:2px dashed #e8c9b8; border-radius:12px; padding:26px 16px; text-align:center; cursor:pointer; transition:all .15s; background:#fffaf6; }
+  .corpus-drop:hover, .corpus-drop.dragover { border-color:var(--primary); background:#fff5f2; }
+  .corpus-drop-emoji { font-size:34px; margin-bottom:8px; }
+  .corpus-drop-text { font-size:14px; color:var(--text); }
+  .corpus-drop-hint { font-size:11px; color:var(--text-soft); margin-top:6px; }
+  .corpus-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0; }
+  .corpus-stat { background:#f8f9fb; border-radius:10px; padding:12px; text-align:center; }
+  .corpus-stat-v { font-size:17px; font-weight:800; color:var(--primary); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .corpus-stat-l { font-size:10px; color:var(--text-soft); margin-top:3px; }
+  .corpus-section { margin-bottom:14px; }
+  .corpus-section-title { font-size:13px; font-weight:600; margin-bottom:8px; color:var(--text); }
+  .corpus-kws { display:flex; flex-wrap:wrap; gap:6px; }
+  .corpus-kw { padding:6px 13px; background:#fff; border:1.5px solid var(--border); border-radius:16px; font-size:12px; font-weight:600; cursor:pointer; transition:all .12s; }
+  .corpus-kw .cnt { color:var(--text-soft); font-weight:400; margin-left:4px; }
+  .corpus-kw:hover, .corpus-kw.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+  .corpus-kw.active .cnt, .corpus-kw:hover .cnt { color:rgba(255,255,255,.8); }
+  .corpus-context { margin-top:10px; background:#fff8f5; border-left:3px solid var(--primary); border-radius:8px; padding:10px 14px; max-height:200px; overflow-y:auto; }
+  .corpus-ctx-item { padding:6px 0; border-bottom:1px dashed #f0e0d8; font-size:12px; }
+  .corpus-ctx-item:last-child { border-bottom:none; }
+  .corpus-ctx-en { color:var(--text); }
+  .corpus-ctx-cn { color:var(--text-light); margin-top:2px; }
+  .corpus-ctx-item mark { background:#ffe3c9; color:#c0392b; font-weight:600; border-radius:3px; padding:0 2px; }
+  .corpus-pairs { max-height:300px; overflow-y:auto; border:1px solid var(--border); border-radius:10px; background:#fafbfc; }
+  .corpus-pair { display:flex; gap:10px; padding:8px 12px; border-bottom:1px solid #eef1f5; cursor:pointer; }
+  .corpus-pair:hover { background:#fff; }
+  .corpus-pair:last-child { border-bottom:none; }
+  .corpus-pair-idx { color:#bdc3c7; font-size:11px; min-width:26px; text-align:right; flex-shrink:0; padding-top:2px; }
+  .corpus-pair-en { font-size:12px; color:var(--text); flex:1; line-height:1.5; }
+  .corpus-pair-cn { font-size:11px; color:var(--text-light); width:34%; flex-shrink:0; line-height:1.5; }
+  .corpus-actions { display:flex; gap:10px; }
+  .corpus-actions .btn { padding:9px 20px; }
+
+  /* ===== 场景学习中心（hub 模式卡） ===== */
+  .hub-mode {
+    border: 2px solid var(--border); border-radius: 14px; padding: 18px 14px; cursor: pointer;
+    text-align: center; transition: all 0.15s; background: white;
+  }
+  .hub-mode:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .hub-mode.disabled { opacity: 0.35; cursor: not-allowed; }
+  .hub-mode.disabled:hover { border-color: var(--border); transform: none; box-shadow: none; }
+  .hub-mode-emoji { font-size: 34px; display: block; margin-bottom: 8px; }
+  .hub-mode-name { font-size: 14px; font-weight: 700; }
+  .hub-mode-sub { font-size: 11px; color: var(--text-soft); margin-top: 4px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-title">🧠 雅思学习系统</div>
+      <div class="brand-sub">词根速记 · 主题词包 · 间隔重复</div>
+    </div>
+    <div class="main-tabs">
+      <button class="main-tab active" data-tab="root"><span class="tab-emoji">🌱</span>词根词缀</button>
+      <button class="main-tab" data-tab="scene"><span class="tab-emoji">🏙️</span>场景</button>
+      <button class="main-tab" data-tab="theme"><span class="tab-emoji">📚</span>主题场景</button>
+      <button class="main-tab" data-tab="my"><span class="tab-emoji">📥</span>我的词库</button>
+    </div>
+    <div class="level-switch">
+      <div class="level-label">📚 词库等级</div>
+      <div class="level-chips">
+        <button class="level-chip active" data-level="all">全部</button>
+        <button class="level-chip" data-level="CET4">四级</button>
+        <button class="level-chip" data-level="CET6">六级</button>
+        <button class="level-chip" data-level="IELTS">雅思</button>
+        <button class="level-chip" data-level="TOEFL">托福</button>
+      </div>
+    </div>
+    <div class="list-header">
+      <span id="list-title">词根库</span>
+      <span class="list-item-badge" id="list-count">0</span>
+    </div>
+    <input type="text" class="list-search" id="list-search" placeholder="搜索...">
+    <div class="list" id="list-container"></div>
+  </aside>
+
+  <main class="main">
+    <!-- 词根模式 -->
+    <div id="root-mode" class="mode-pane" style="display:flex; flex-direction:column; height:100%;">
+      <div class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title" id="root-title">请选择一个词根</div>
+          <span class="level-tag all" id="root-level-tag">全部</span>
+        </div>
+        <div class="topbar-actions">
+          <div class="pager" id="pager">
+            <button class="pager-btn" id="btn-prev">◀</button>
+            <span class="pager-info" id="pager-info">1/1</span>
+            <button class="pager-btn" id="btn-next">▶</button>
+          </div>
+          <button class="btn" id="btn-shuffle">🎲 随机</button>
+          <button class="btn btn-primary" id="btn-review">📝 复习未掌握</button>
+        </div>
+      </div>
+      <div class="mindmap-area">
+        <svg class="mindmap-svg" id="mindmap" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div class="empty-state" id="root-empty">
+          <div class="empty-state-emoji">🌳</div>
+          <div class="empty-state-title">从词根开始，构建你的单词网络</div>
+          <div class="empty-state-sub">选择词根（如 <b style="color:var(--primary)">port</b>），思维导图展开相关单词。点击单词查看词伙搭配、同义替换、熟词僻义。</div>
+        </div>
+        <div class="stats" id="root-stats" style="display:none;">
+          <div class="stat-card"><div class="stat-value" id="r-mastered">0/0</div><div class="stat-label">已掌握</div></div>
+          <div class="stat-card warning"><div class="stat-value" id="r-due">0</div><div class="stat-label">今日待复习</div></div>
+        </div>
+        <div class="zoom-controls" id="zoom-controls" style="display:none;">
+          <button class="zoom-btn" data-zoom="in">+</button>
+          <button class="zoom-btn" data-zoom="out">−</button>
+          <button class="zoom-btn" data-zoom="reset">⟲</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主题词包模式 -->
+    <div id="theme-mode" class="mode-pane" style="display:none; flex-direction:column; height:100%;">
+      <div class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title" id="theme-title">选择一个主题</div>
+          <span class="level-tag IELTS" id="theme-level-tag">雅思写作</span>
+        </div>
+      </div>
+      <div class="image-mode-area">
+        <div class="image-left">
+          <div class="scene-picker" style="background: linear-gradient(135deg, #fff5f4 0%, #fff 100%); border: 1px solid #ffe5e0;">
+            <div class="scene-picker-title">📚 雅思写作 10 大话题</div>
+            <div class="scene-grid" id="theme-grid"></div>
+          </div>
+          <div class="scene-words" id="theme-words" style="display:none;">
+            <div class="scene-words-title">
+              <span id="theme-words-title">相关单词</span>
+              <span class="list-item-badge" id="theme-word-count">0</span>
+            </div>
+            <div class="word-cloud" id="theme-word-cloud"></div>
+            <div style="margin-top:12px; padding:10px; background:#fff5f4; border-radius:8px; font-size:11px; color:var(--text-light); line-height:1.5;">
+              💡 <b>提示</b>：点击单词查看<b>词伙搭配</b>和<b>同义替换</b>，这是雅思写作提分关键
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 场景词汇模式（看图学词：真实场景图 + 玩游戏） -->
+    <div id="scene-mode" class="mode-pane" style="display:none; flex-direction:column; height:100%;">
+      <div class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title">📷 看图学词</div>
+          <span class="level-tag all" id="scene-level-tag">真实场景图</span>
+        </div>
+      </div>
+      <div style="flex:1; flex-direction:column; overflow:hidden; display:flex;">
+        <div style="padding:10px 18px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; background:white; border-bottom:1px solid var(--border);">
+          <span style="font-size:12px; color:var(--text-soft); font-weight:600;">🍳 生活场景</span>
+          <div id="look-scene-chips" style="display:flex; gap:5px; flex-wrap:wrap;"></div>
+          <span style="font-size:11px; color:var(--text-soft); margin-left:auto;">💡 名词看图认 · 动词看图猜，点一下看答案</span>
+        </div>
+        <div style="flex:1; overflow-y:auto; padding:16px 20px;" id="look-stage">
+          <!-- 由 JS 渲染 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 我的词库模式 -->
+    <div id="my-mode" class="mode-pane" style="display:none; flex-direction:column; height:100%;">
+      <div class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title">📥 我的词库</div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn" id="btn-import">📥 导入单词</button>
+          <button class="btn" id="btn-review-due">🔥 今日复习</button>
+          <button class="btn btn-primary" id="btn-export">💾 导出</button>
+        </div>
+      </div>
+      <div class="my-mode-area">
+        <!-- 🎬 语料提炼中心（YouTube SRT → 高频词） -->
+        <div class="corpus-box" id="corpus-box">
+          <div class="corpus-head">
+            <span class="corpus-title">🎬 语料提炼中心</span>
+            <span class="corpus-sub">拖入 YouTube 双语字幕 .srt → 自动解析中英对照 + 高频词统计</span>
+          </div>
+          <div class="corpus-drop" id="corpus-drop">
+            <div class="corpus-drop-emoji">📄</div>
+            <div class="corpus-drop-text">把 .srt 字幕文件拖到这里，或 <b style="color:var(--primary);">点击选择文件</b></div>
+            <div class="corpus-drop-hint">支持多个文件 · 双语字幕（英文行 + 中文行）效果最佳</div>
+            <input type="file" id="corpus-file" accept=".srt,.txt" multiple style="display:none">
+          </div>
+          <div id="corpus-result" style="display:none;">
+            <div class="corpus-stats">
+              <div class="corpus-stat"><div class="corpus-stat-v" id="corpus-file-name">—</div><div class="corpus-stat-l">文件</div></div>
+              <div class="corpus-stat"><div class="corpus-stat-v" id="corpus-pair-count">0</div><div class="corpus-stat-l">中英句对</div></div>
+              <div class="corpus-stat"><div class="corpus-stat-v" id="corpus-word-count">0</div><div class="corpus-stat-l">单词量</div></div>
+              <div class="corpus-stat"><div class="corpus-stat-v" id="corpus-top-count">0</div><div class="corpus-stat-l">高频词</div></div>
+            </div>
+            <div class="corpus-section">
+              <div class="corpus-section-title">🔝 高频词 TOP 20 <span style="font-size:11px; color:var(--text-soft);">点词看例句上下文</span></div>
+              <div class="corpus-kws" id="corpus-kws"></div>
+              <div class="corpus-context" id="corpus-context" style="display:none;"></div>
+            </div>
+            <div class="corpus-section">
+              <div class="corpus-section-title">📜 中英对照 <span id="corpus-pairs-title" style="font-size:11px; color:var(--text-soft);"></span></div>
+              <div class="corpus-pairs" id="corpus-pairs"></div>
+            </div>
+            <div class="corpus-actions">
+              <button class="btn" id="corpus-export">💾 导出 JSON</button>
+              <button class="btn btn-primary" id="corpus-to-ai">🤖 交给阿智提炼</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="my-header">
+          <div class="my-stat"><div class="my-stat-value" id="my-count">0</div><div class="my-stat-label">我的单词</div></div>
+          <div class="my-stat" style="border-left:3px solid var(--primary);"><div class="my-stat-value" id="my-due">0</div><div class="my-stat-label">今日待复习</div></div>
+          <div class="my-stat" style="border-left:3px solid var(--success);"><div class="my-stat-value" id="my-mastered">0</div><div class="my-stat-label">已掌握</div></div>
+          <div class="my-stat" style="border-left:3px solid var(--warning);"><div class="my-stat-value" id="my-sentences">0</div><div class="my-stat-label">我的造句</div></div>
+        </div>
+        <div class="my-section">
+          <div class="my-section-title">
+            <span>📚 我的单词库（<span id="my-words-count">0</span>）</span>
+            <span style="font-size:11px; color:var(--text-soft);">点击复习 / 长按删除</span>
+          </div>
+          <div class="my-words" id="my-words-list"></div>
+          <div class="my-empty" id="my-words-empty">还没有导入单词。点击右上角"导入单词"开始你的学习之旅 🚀</div>
+        </div>
+        <div class="my-section">
+          <div class="my-section-title">
+            <span>✍️ 我的造句（<span id="my-sentences-count">0</span>）</span>
+            <span style="font-size:11px; color:var(--text-soft);">把消极词汇转化为积极词汇的关键</span>
+          </div>
+          <div id="my-sentences-list"></div>
+          <div class="my-empty" id="my-sentences-empty">还没写过句子。在任意单词详情页用"写一句话"功能开始 ✏️</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- 详情面板（所有模式共用） -->
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-header">
+    <div>
+      <div class="detail-word" id="d-word">—</div>
+      <div class="detail-phonetic" id="d-phonetic">—</div>
+      <div class="detail-meta" id="d-levels"></div>
+    </div>
+    <button class="detail-close" id="d-close">✕</button>
+  </div>
+  <div class="detail-body">
+    <div class="detail-section">
+      <div class="detail-section-title">📖 释义</div>
+      <div class="detail-meaning" id="d-meaning"></div>
+    </div>
+    <div class="detail-section" id="d-etymology-section" style="display:none;">
+      <div class="detail-section-title">🔍 词根拆解</div>
+      <div class="detail-etymology">
+        <div class="etymology-breakdown" id="d-breakdown"></div>
+        <div class="etymology-text" id="d-etymology"></div>
+      </div>
+    </div>
+    <div class="detail-section" id="d-collo-section" style="display:none;">
+      <div class="detail-section-title">🤝 词伙搭配</div>
+      <div class="collo-list" id="d-collo"></div>
+    </div>
+    <div class="detail-section" id="d-syno-section" style="display:none;">
+      <div class="detail-section-title">🔁 同义替换</div>
+      <div class="syno-list" id="d-syno"></div>
+    </div>
+    <div class="detail-section" id="d-pitfall-section" style="display:none;">
+      <div class="detail-section-title">⚠️ 熟词僻义</div>
+      <div class="pitfall" id="d-pitfall"></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">📝 例句</div>
+      <div class="detail-example" id="d-example">
+        <div class="detail-example-en"></div>
+        <div class="detail-example-cn"></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">✍️ 写一句话（造句输出）</div>
+      <div class="sentence-box">
+        <textarea class="sentence-textarea" id="d-sentence" placeholder="用这个单词造一个句子，让它成为你的积极词汇..."></textarea>
+        <div class="sentence-actions">
+          <button class="btn btn-primary" id="d-save-sentence" style="flex:1;">💾 保存到我的造句</button>
+        </div>
+        <div class="sentence-list" id="d-sentences-list"></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">📊 复习状态</div>
+      <div class="review-box" id="d-review-status">
+        <div class="review-dot" id="d-dot-0"></div>
+        <div class="review-dot" id="d-dot-1"></div>
+        <div class="review-dot" id="d-dot-2"></div>
+        <div class="review-dot" id="d-dot-3"></div>
+        <span style="margin-left:8px; color:var(--text-light);" id="d-review-text">未复习</span>
+      </div>
+    </div>
+  </div>
+  <div class="detail-actions">
+    <button class="review-btn b0" data-box="0">😵 不认识</button>
+    <button class="review-btn b1" data-box="1">😕 模糊</button>
+    <button class="review-btn b2" data-box="2">🙂 认识</button>
+    <button class="review-btn b3" data-box="3">😎 掌握</button>
+  </div>
+</div>
+
+<!-- 导入弹窗 -->
+<div class="modal" id="import-modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title">📥 导入单词表</div>
+      <button class="detail-close" id="import-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-hint">
+        每行一个单词，格式支持：<br>
+        • <code>word</code> — 只填单词<br>
+        • <code>word\t中文释义</code> — tab 分隔<br>
+        • <code>word, n., 中文释义</code> — 逗号分隔含词性<br>
+        支持多行批量导入。
+      </div>
+      <textarea class="modal-textarea" id="import-text" placeholder="例如：
+compelling    adj. 引人入胜的
+resilient    adj. 有韧性的
+nuanced    adj. 细微差别的
+elusive    adj. 难以捉摸的"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="import-clear">清空</button>
+      <button class="btn btn-primary" id="import-confirm">✅ 导入</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 卡片工坊悬浮按钮 -->
+<button class="fab" id="card-fab" title="词汇卡片工坊">🎴</button>
+
+<!-- 卡片工坊全屏层 -->
+<div class="card-overlay" id="card-overlay">
+  <div class="card-overlay-topbar">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div style="font-size:16px; font-weight:700;">🎴 词汇卡片工坊</div>
+      <span class="level-tag all" id="card-level-tag">生活场景</span>
+      <span style="font-size:11px; color:var(--text-soft);">选择一个生活场景，一键生成小红书风格卡片</span>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <select id="card-style" class="btn" style="padding:7px 10px; font-size:12px; cursor:pointer;">
+        <option value="candy">🍬 糖果色</option>
+        <option value="cream">🍦 奶油</option>
+        <option value="morandi">🎨 莫兰迪</option>
+        <option value="forest">🌿 森系</option>
+      </select>
+      <button class="btn btn-primary" id="btn-download-card">📥 下载 PNG</button>
+      <button class="btn" id="card-overlay-close">✕ 关闭</button>
+    </div>
+  </div>
+  <div class="card-overlay-body">
+    <div class="card-overlay-left">
+      <div class="cat-label">🍳 生活微场景 · 28 大类 109 个场景</div>
+      <div class="cat-chips" id="card-cat-chips"></div>
+      <div class="life-grid" id="card-life-grid"></div>
+    </div>
+    <div class="card-overlay-right">
+      <div id="card-canvas" style="width:420px; min-height:780px; background:#fff5e1; border-radius:24px; box-shadow:0 20px 60px rgba(0,0,0,0.15); padding:28px; position:relative; overflow:hidden;">
+        <!-- 卡片内容由 JS 渲染 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 场景互动 viewer（点击场景卡片放大浏览） -->
+<div class="scene-viewer" id="scene-viewer">
+  <div class="scene-viewer-card">
+    <div class="scene-viewer-top">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span id="viewer-emoji" style="font-size:24px;">🎬</span>
+        <div>
+          <div id="viewer-title" class="viewer-title" style="margin:0;"></div>
+          <div id="viewer-sub" class="viewer-sub" style="margin:2px 0 0;"></div>
+        </div>
+      </div>
+      <button class="btn" id="viewer-close">✕ 关闭</button>
+    </div>
+    <div class="scene-viewer-body" id="viewer-body">
+      <!-- JS 渲染 -->
+    </div>
+  </div>
+</div>
+
+<!-- 场景学习中心（选学习方式） -->
+<div class="scene-viewer" id="scene-hub">
+  <div class="scene-viewer-card" style="max-width:560px;">
+    <div class="scene-viewer-top">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span id="hub-emoji" style="font-size:28px;">🎬</span>
+        <div>
+          <div id="hub-title" class="viewer-title" style="margin:0; font-size:20px;"></div>
+          <div id="hub-sub" class="viewer-sub" style="margin:2px 0 0;"></div>
+        </div>
+      </div>
+      <button class="btn" id="hub-close">✕ 关闭</button>
+    </div>
+    <div style="padding:22px 24px 26px;" id="hub-body">
+      <div style="font-size:14px; font-weight:600; margin-bottom:14px; color:var(--text-light);">选择学习方式：</div>
+      <div id="hub-modes" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;"></div>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="life.js"></script>
+<script src="life2.js"></script>
+<script src="life3.js"></script>
+<script src="life4.js"></script>
+<script src="images.js"></script>
+<script src="map.js"></script>
+<script src="look.js"></script>
+<script>
+/* ============================================================
+   🧠 状态
+   ============================================================ */
+const LEVEL_NAMES = { all: '全部', CET4: '四级', CET6: '六级', IELTS: '雅思', TOEFL: '托福' };
+const PAGE_SIZE = 7;
+const BOX_INTERVALS = [1, 3, 7, 30]; // 复习盒 0/1/2/3 的间隔天数
+
+const state = {
+  tab: 'root',         // root | theme | scene | my
+  level: 'all',
+  currentRoot: 'port',
+  currentTheme: null,
+  currentScene: null,
+  currentCardScene: null,
+  currentCardTheme: null,
+  currentLife: null,
+  cardStyle: 'candy',
+  sceneView: 'space',   // space | life
+  sceneView2: 'grid',   // grid | map
+  mapStyle: 'candy',
+  mapScene: 'egg',
+  cardCategory: null,
+  page: 0,
+  reviewMode: false,
+  mastered: {},
+  review: {},          // {word: {box, nextReview, lastReview}}
+  sentences: {},       // {word: [{en, createdAt}]}
+  customWords: []      // [{word, pos, cn, phonetic, breakdown, example}]
+};
+
+function loadState() {
+  try {
+    const m = localStorage.getItem('mmv3-mastered'); if (m) state.mastered = JSON.parse(m);
+    const r = localStorage.getItem('mmv3-review'); if (r) state.review = JSON.parse(r);
+    const s = localStorage.getItem('mmv3-sentences'); if (s) state.sentences = JSON.parse(s);
+    const c = localStorage.getItem('mmv3-custom'); if (c) state.customWords = JSON.parse(c);
+    const lv = localStorage.getItem('mmv3-level'); if (lv && LEVEL_NAMES[lv]) state.level = lv;
+  } catch (e) {}
+}
+function saveState() {
+  try {
+    localStorage.setItem('mmv3-mastered', JSON.stringify(state.mastered));
+    localStorage.setItem('mmv3-review', JSON.stringify(state.review));
+    localStorage.setItem('mmv3-sentences', JSON.stringify(state.sentences));
+    localStorage.setItem('mmv3-custom', JSON.stringify(state.customWords));
+    localStorage.setItem('mmv3-level', state.level);
+  } catch (e) {}
+}
+function getLevels(w) { return w.level && w.level.length ? w.level : ['CET4']; }
+function matchLevel(w, lv) { return lv === 'all' || getLevels(w).includes(lv); }
+
+/* 复习盒相关 */
+function setReview(word, box) {
+  state.review[word] = {
+    box,
+    nextReview: Date.now() + BOX_INTERVALS[box] * 24 * 60 * 60 * 1000,
+    lastReview: Date.now()
+  };
+  saveState();
+}
+function getReview(word) { return state.review[word]; }
+function isDue(word) {
+  const r = state.review[word];
+  if (!r) return true; // 没复习过的也算待复习
+  return r.nextReview <= Date.now();
+}
+function getDueCount(words) { return words.filter(w => isDue(w.word)).length; }
+
+/* 整合所有可见单词（去重） */
+function allWords() {
+  const seen = new Set();
+  const arr = [];
+  const add = (w, source) => {
+    const key = w.word;
+    if (seen.has(key)) return;
+    seen.add(key);
+    arr.push({ ...w, _source: source });
+  };
+  for (const r of Object.values(ROOTS)) for (const w of r.words) add(w, 'root');
+  for (const t of Object.values(THEMES)) for (const w of t.words) add(w, 'theme');
+  for (const s of Object.values(SCENES)) for (const w of s.words) add(w, 'scene');
+  for (const w of state.customWords) add(w, 'custom');
+  return arr;
+}
+
+/* ============================================================
+   🎨 侧边栏（按 tab 切换列表）
+   ============================================================ */
+function renderSidebar() {
+  const container = document.getElementById('list-container');
+  const title = document.getElementById('list-title');
+  const count = document.getElementById('list-count');
+  const search = document.getElementById('list-search');
+  const q = (search.value || '').toLowerCase();
+
+  if (state.tab === 'root') {
+    title.textContent = '词根库';
+    const all = Object.keys(ROOTS).length;
+    count.textContent = all;
+    search.placeholder = '搜索词根...';
+    const entries = Object.entries(ROOTS).filter(([k, v]) => !q || k.includes(q) || v.cn.includes(q));
+    container.innerHTML = entries.map(([k, v]) => {
+      const n = v.words.filter(w => matchLevel(w, state.level)).length;
+      return `<div class="list-item ${k === state.currentRoot ? 'active' : ''}" data-key="${k}">
+        <div class="list-item-emoji" style="color:${v.color}">●</div>
+        <div class="list-item-body">
+          <div class="list-item-title">${k}</div>
+          <div class="list-item-sub">${v.cn}${n > 0 ? ' · ' + n + ' 词' : ''}</div>
+        </div>
+        <div class="list-item-badge">${n}</div>
+      </div>`;
+    }).join('') || '<div class="list-item-empty">无匹配词根</div>';
+    container.querySelectorAll('.list-item').forEach(el => {
+      el.addEventListener('click', () => {
+        state.currentRoot = el.dataset.key;
+        state.reviewMode = false;
+        state.page = 0;
+        renderAll();
+      });
+    });
+  } else if (state.tab === 'theme') {
+    title.textContent = '雅思写作话题';
+    count.textContent = Object.keys(THEMES).length;
+    search.placeholder = '搜索主题...';
+    const entries = Object.entries(THEMES).filter(([k, v]) => !q || v.name.includes(q));
+    container.innerHTML = entries.map(([k, v]) => `
+      <div class="list-item ${k === state.currentTheme ? 'active' : ''}" data-key="${k}">
+        <div class="list-item-emoji">${v.emoji}</div>
+        <div class="list-item-body">
+          <div class="list-item-title">${v.name}</div>
+          <div class="list-item-sub">${v.words.length} 词 · 写作</div>
+        </div>
+        <div class="list-item-badge">${v.words.length}</div>
+      </div>`).join('') || '<div class="list-item-empty">无匹配主题</div>';
+    container.querySelectorAll('.list-item').forEach(el => {
+      el.addEventListener('click', () => {
+        state.currentTheme = el.dataset.key;
+        renderThemeWords();
+        renderSidebar();
+      });
+    });
+  } else if (state.tab === 'scene') {
+    title.textContent = '场景库';
+    count.textContent = Object.keys(SCENES).length;
+    search.placeholder = '搜索场景...';
+    const entries = Object.entries(SCENES).filter(([k, v]) => !q || v.name.includes(q));
+    container.innerHTML = entries.map(([k, v]) => {
+      const n = v.words.filter(w => matchLevel(w, state.level)).length;
+      return `<div class="list-item ${k === state.currentScene ? 'active' : ''}" data-key="${k}">
+        <div class="list-item-emoji">${v.emoji}</div>
+        <div class="list-item-body">
+          <div class="list-item-title">${v.name}</div>
+          <div class="list-item-sub">${n} 词</div>
+        </div>
+        <div class="list-item-badge">${n}</div>
+      </div>`;
+    }).join('') || '<div class="list-item-empty">无匹配场景</div>';
+    container.querySelectorAll('.list-item').forEach(el => {
+      el.addEventListener('click', () => {
+        state.currentScene = el.dataset.key;
+        openSceneViewer(el.dataset.key);
+        renderSidebar();
+      });
+    });
+  } else {
+    // my
+    title.textContent = '我的词库';
+    count.textContent = state.customWords.length;
+    search.placeholder = '搜索我的词...';
+    const list = state.customWords.filter(w => !q || w.word.includes(q) || (w.cn && w.cn.includes(q)));
+    container.innerHTML = list.length === 0
+      ? '<div class="list-item-empty">还没导入单词<br>点顶部"导入单词"</div>'
+      : list.map((w, i) => {
+        const r = state.review[w.word];
+        const box = r ? r.box : -1;
+        return `<div class="list-item" data-idx="${i}">
+          <div class="list-item-emoji" style="color:${box >= 2 ? 'var(--success)' : 'var(--warning)'}">${box >= 2 ? '✓' : '●'}</div>
+          <div class="list-item-body">
+            <div class="list-item-title">${w.word}</div>
+            <div class="list-item-sub">${w.cn || ''}${w.pos ? ' · ' + w.pos : ''}</div>
+          </div>
+        </div>`;
+      }).join('');
+    container.querySelectorAll('.list-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.idx);
+        showWordDetail(state.customWords[idx], null);
+      });
+    });
+  }
+}
+
+/* ============================================================
+   🌳 思维导图（词根模式）
+   ============================================================ */
+function getFilteredRootWords(key) {
+  const root = ROOTS[key];
+  if (!root) return [];
+  let words = root.words.filter(w => matchLevel(w, state.level));
+  if (state.reviewMode) words = words.filter(w => !isMastered(w.word));
+  return words;
+}
+
+function renderMindmap() {
+  const svg = document.getElementById('mindmap');
+  const empty = document.getElementById('root-empty');
+  const root = ROOTS[state.currentRoot];
+
+  if (!root) {
+    svg.innerHTML = '';
+    empty.style.display = 'flex';
+    document.getElementById('zoom-controls').style.display = 'none';
+    document.getElementById('root-stats').style.display = 'none';
+    document.getElementById('pager').style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  document.getElementById('zoom-controls').style.display = 'flex';
+  document.getElementById('root-stats').style.display = 'flex';
+
+  const words = getFilteredRootWords(state.currentRoot);
+  if (words.length === 0) {
+    svg.innerHTML = `<text x="600" y="380" text-anchor="middle" fill="#7f8c8d" font-size="17">📭 当前词库下没有匹配的单词</text>`;
+    document.getElementById('pager').style.display = 'none';
+    updateLevelTag();
+    return;
+  }
+  document.getElementById('pager').style.display = 'flex';
+
+  const totalPages = Math.max(1, Math.ceil(words.length / PAGE_SIZE));
+  if (state.page >= totalPages) state.page = totalPages - 1;
+  const pageWords = words.slice(state.page * PAGE_SIZE, (state.page + 1) * PAGE_SIZE);
+
+  const W = 1200, H = 800, cx = W / 2, cy = H / 2;
+  const n = pageWords.length;
+  const radius = n <= 5 ? 300 : 265;
+
+  let html = `
+    <g class="center-group" transform="translate(${cx}, ${cy})">
+      <circle r="${radius + 110}" fill="${root.color}" opacity="0.05" />
+      <circle r="86" fill="${root.color}" opacity="0.12" />
+      <circle r="66" fill="${root.color}" opacity="0.18" />
+      <circle r="52" fill="white" stroke="${root.color}" stroke-width="3.5" />
+      <text text-anchor="middle" y="-7" font-size="26" font-weight="800" fill="${root.color}">${root.name}</text>
+      <text text-anchor="middle" y="20" font-size="14" fill="#7f8c8d">${root.cn}</text>
+    </g>
+  `;
+
+  const angleStep = (Math.PI * 2) / n;
+  const startAngle = -Math.PI / 2;
+  pageWords.forEach((w, i) => {
+    const angle = startAngle + i * angleStep;
+    const x = cx + Math.cos(angle) * radius;
+    const y = cy + Math.sin(angle) * radius;
+    const mastered = isMastered(w.word);
+    const nodeColor = mastered ? '#95a5a6' : root.color;
+    const opacity = mastered ? 0.45 : 1;
+    const midX = (cx + x) / 2 + Math.cos(angle + Math.PI / 2) * 26;
+    const midY = (cy + y) / 2 + Math.sin(angle + Math.PI / 2) * 26;
+    html += `<path d="M ${cx} ${cy} Q ${midX} ${midY} ${x} ${y}" stroke="${nodeColor}" stroke-width="2.5" fill="none" opacity="${opacity * 0.55}" />`;
+    const displayText = highlightRoot(w.word, root.name);
+    html += `
+      <g class="node-group" data-word="${w.word}" transform="translate(${x}, ${y})" opacity="${opacity}">
+        <circle r="48" fill="white" stroke="${nodeColor}" stroke-width="3" class="node-circle" />
+        <text text-anchor="middle" y="1" font-size="16" font-weight="700" fill="${nodeColor}" class="node-text">${displayText}</text>
+        <text text-anchor="middle" y="18" font-size="10" fill="#7f8c8d" class="node-text">${w.cn.length > 7 ? w.cn.slice(0, 7) + '…' : w.cn}</text>
+        ${mastered ? '<text text-anchor="middle" y="-54" font-size="16" fill="#27ae60">✓</text>' : ''}
+      </g>`;
+  });
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = html;
+  svg.querySelectorAll('.node-group').forEach(el => {
+    el.addEventListener('click', () => {
+      const w = ROOTS[state.currentRoot].words.find(x => x.word === el.dataset.word);
+      if (w) showWordDetail(w, 'root');
+    });
+  });
+
+  // 统计
+  const masteredCount = words.filter(w => isMastered(w.word)).length;
+  document.getElementById('r-mastered').textContent = `${masteredCount}/${words.length}`;
+  document.getElementById('r-due').textContent = getDueCount(words);
+  document.getElementById('root-title').innerHTML = `<span class="accent">${root.name}</span> · ${root.cn}`;
+  document.getElementById('pager-info').textContent = `${state.page + 1}/${totalPages}`;
+  document.getElementById('btn-prev').disabled = state.page === 0;
+  document.getElementById('btn-next').disabled = state.page >= totalPages - 1;
+  updateLevelTag();
+}
+
+function highlightRoot(word, rootName) {
+  const rl = rootName.toLowerCase().split('/')[0].trim();
+  const lower = word.toLowerCase();
+  const idx = lower.indexOf(rl);
+  if (idx === -1) return word;
+  const pre = word.slice(0, idx), core = word.slice(idx, idx + rl.length), suf = word.slice(idx + rl.length);
+  return `${pre}<tspan fill="#e74c3c" font-weight="800">${core}</tspan>${suf}`;
+}
+
+function updateLevelTag() {
+  const t = document.getElementById('root-level-tag');
+  if (t) { t.className = `level-tag ${state.level}`; t.textContent = LEVEL_NAMES[state.level] + (state.reviewMode ? ' · 复习' : ''); }
+}
+
+function isMastered(w) { return !!state.mastered[w]; }
+
+/* ============================================================
+   📚 主题词包
+   ============================================================ */
+function renderThemeWords() {
+  const grid = document.getElementById('theme-grid');
+  const wordsBox = document.getElementById('theme-words');
+  const cloud = document.getElementById('theme-word-cloud');
+
+  grid.innerHTML = Object.entries(THEMES).map(([k, v]) => `
+    <div class="scene-chip ${k === state.currentTheme ? 'active' : ''}" data-key="${k}">
+      <span class="scene-chip-emoji">${v.emoji}</span>
+      <span class="scene-chip-label">${v.name}</span>
+    </div>`).join('');
+  grid.querySelectorAll('.scene-chip').forEach(el => {
+    el.addEventListener('click', () => {
+      state.currentTheme = el.dataset.key;
+      renderThemeWords();
+      renderSidebar();
+    });
+  });
+
+  if (state.currentTheme && THEMES[state.currentTheme]) {
+    const theme = THEMES[state.currentTheme];
+    wordsBox.style.display = 'block';
+    document.getElementById('theme-words-title').innerHTML = `${theme.emoji} ${theme.name} · ${theme.desc || ''}`;
+    document.getElementById('theme-word-count').textContent = theme.words.length;
+    cloud.innerHTML = theme.words.map(w => {
+      const m = isMastered(w.word);
+      const hasCollo = w.collocations && w.collocations.length;
+      return `<div class="word-chip" data-word="${w.word}" data-theme="${state.currentTheme}" style="${m ? 'opacity:0.5;' : ''}">
+        ${w.word}<span class="pos-mini">${w.cn}${hasCollo ? ' · 🤝' : ''}</span>
+        ${m ? '<span style="color:var(--success); margin-left:4px;">✓</span>' : ''}
+      </div>`;
+    }).join('');
+    cloud.querySelectorAll('.word-chip').forEach(el => {
+      el.addEventListener('click', () => {
+        const w = THEMES[state.currentTheme].words.find(x => x.word === el.dataset.word);
+        if (w) showWordDetail(w, 'theme');
+      });
+    });
+    document.getElementById('theme-title').textContent = `${theme.emoji} ${theme.name}`;
+  } else {
+    wordsBox.style.display = 'none';
+    document.getElementById('theme-title').textContent = '选择一个主题';
+  }
+}
+
+/* ============================================================
+   🏙️ 场景词
+   ============================================================ */
+/* ============================================================
+   📖 详情面板（核心：词伙+同义替换+熟词僻义+造句+复习）
+   ============================================================ */
+function showWordDetail(wordData, source) {
+  const panel = document.getElementById('detail-panel');
+  // 恢复默认 UI（map 节点可能隐藏过）
+  document.getElementById('d-save-sentence').parentElement.parentElement.style.display = '';
+  document.querySelector('.detail-actions').style.display = '';
+  document.getElementById('d-word').textContent = wordData.word;
+  document.getElementById('d-phonetic').textContent = wordData.phonetic || '';
+  document.getElementById('d-meaning').innerHTML = `<span class="detail-pos">${wordData.pos || 'n.'}</span>${wordData.cn || ''}`;
+
+  // 等级
+  const lv = getLevels(wordData);
+  document.getElementById('d-levels').innerHTML = lv.map(l => `<span class="level-badge ${l}">${LEVEL_NAMES[l]}</span>`).join('');
+
+  // 例句
+  const exEl = document.getElementById('d-example');
+  if (wordData.example) {
+    exEl.style.display = 'block';
+    exEl.querySelector('.detail-example-en').textContent = wordData.example.en;
+    exEl.querySelector('.detail-example-cn').textContent = wordData.example.cn;
+  } else exEl.style.display = 'none';
+
+  // 词根拆解
+  const ety = document.getElementById('d-etymology-section');
+  if (wordData.breakdown) {
+    ety.style.display = 'block';
+    document.getElementById('d-breakdown').textContent = wordData.breakdown;
+    document.getElementById('d-etymology').textContent = source === 'root'
+      ? `属于 ${ROOTS[state.currentRoot].name} (${ROOTS[state.currentRoot].cn}) 词根家族。联想：${wordData.breakdown}`
+      : `记忆联想：${wordData.breakdown}`;
+  } else ety.style.display = 'none';
+
+  // 词伙
+  const collo = document.getElementById('d-collo-section');
+  if (wordData.collocations && wordData.collocations.length) {
+    collo.style.display = 'block';
+    document.getElementById('d-collo').innerHTML = wordData.collocations.map(c => `<div class="collo-item">${c}</div>`).join('');
+  } else collo.style.display = 'none';
+
+  // 同义替换
+  const syno = document.getElementById('d-syno-section');
+  if (wordData.synonyms && wordData.synonyms.length) {
+    syno.style.display = 'block';
+    document.getElementById('d-syno').innerHTML = wordData.synonyms.map(s =>
+      `<div class="syno-item" data-word="${s.word}">${s.word}<span class="syno-pos">${s.pos} ${s.cn}</span></div>`
+    ).join('');
+    document.querySelectorAll('#d-syno .syno-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const w = allWords().find(x => x.word === el.dataset.word);
+        if (w) showWordDetail(w, w._source);
+        else showToast(`「${el.dataset.word}」暂未收录，可导入到我的词库`);
+      });
+    });
+  } else syno.style.display = 'none';
+
+  // 熟词僻义
+  const pit = document.getElementById('d-pitfall-section');
+  if (wordData.additional_meaning) {
+    pit.style.display = 'block';
+    document.getElementById('d-pitfall').innerHTML = wordData.additional_meaning;
+  } else pit.style.display = 'none';
+
+  // 造句列表
+  const ss = state.sentences[wordData.word] || [];
+  document.getElementById('d-sentences-list').innerHTML = ss.length === 0 ? '' :
+    '<div style="font-size:11px; color:var(--text-soft); margin-bottom:4px;">已保存的句子：</div>' +
+    ss.map(s => `<div class="sentence-item">
+      <div class="sentence-item-en">${s.en}</div>
+      <div class="sentence-item-time">${new Date(s.createdAt).toLocaleDateString()}</div>
+    </div>`).join('');
+
+  document.getElementById('d-sentence').value = '';
+  document.getElementById('d-save-sentence').onclick = () => {
+    const en = document.getElementById('d-sentence').value.trim();
+    if (!en) { showToast('请先写一句'); return; }
+    if (!state.sentences[wordData.word]) state.sentences[wordData.word] = [];
+    state.sentences[wordData.word].push({ en, createdAt: Date.now() });
+    saveState();
+    showWordDetail(wordData, source);
+    updateMyStats();
+    showToast('✍️ 已保存到我的造句');
+  };
+
+  // 复习状态
+  updateReviewStatus(wordData.word);
+
+  // 复习按钮
+  document.querySelectorAll('.review-btn').forEach(btn => {
+    btn.onclick = () => {
+      const box = parseInt(btn.dataset.box);
+      setReview(wordData.word, box);
+      if (box >= 2) state.mastered[wordData.word] = true;
+      else delete state.mastered[wordData.word];
+      saveState();
+      updateReviewStatus(wordData.word);
+      showToast(box === 3 ? '😎 掌握！30 天后再复习' : box === 2 ? '🙂 认识，7 天后再复习' : box === 1 ? '😕 模糊，3 天后再复习' : '😵 不认识，明天再复习');
+      // 重新渲染（节点状态可能改变）
+      if (state.tab === 'root') renderMindmap();
+      else if (state.tab === 'theme') renderThemeWords();
+      else if (state.tab === 'scene') { renderLookSceneChips(); renderLookStage(); }
+      else if (state.tab === 'my') renderMy();
+    };
+  });
+
+  document.getElementById('d-close').onclick = () => panel.classList.remove('open');
+  panel.classList.add('open');
+}
+
+function updateReviewStatus(word) {
+  const r = state.review[word];
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('d-dot-' + i).classList.toggle('active', r && r.box === i);
+  }
+  let txt = '未复习';
+  if (r) {
+    const day = Math.round((r.nextReview - Date.now()) / (24 * 60 * 60 * 1000));
+    txt = r.box === 3 ? '已掌握 · ' + (day > 0 ? day + '天后复习' : '今天复习') :
+          r.box === 2 ? '已认识 · ' + (day > 0 ? day + '天后复习' : '今天复习') :
+          r.box === 1 ? '模糊 · ' + (day > 0 ? day + '天后复习' : '今天复习') :
+                        '不认识 · ' + (day > 0 ? day + '天后复习' : '今天复习');
+  }
+  document.getElementById('d-review-text').textContent = txt;
+}
+
+/* ============================================================
+   📥 我的词库
+   ============================================================ */
+function renderMy() {
+  document.getElementById('my-count').textContent = state.customWords.length;
+  document.getElementById('my-mastered').textContent = state.customWords.filter(w => state.mastered[w.word]).length;
+  const dueWords = state.customWords.filter(w => isDue(w.word));
+  document.getElementById('my-due').textContent = dueWords.length;
+  const sentTotal = Object.values(state.sentences).reduce((s, arr) => s + arr.length, 0);
+  document.getElementById('my-sentences').textContent = sentTotal;
+
+  // 我的单词列表
+  const list = document.getElementById('my-words-list');
+  const empty = document.getElementById('my-words-empty');
+  document.getElementById('my-words-count').textContent = state.customWords.length;
+  if (state.customWords.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    list.innerHTML = state.customWords.map((w, i) => {
+      const r = state.review[w.word];
+      const due = isDue(w.word);
+      const box = r ? r.box : -1;
+      return `<div class="word-chip" data-idx="${i}" style="background:${due ? '#fff5f4' : '#f7f9fc'}; border-color:${due ? 'var(--primary)' : 'var(--border)'};">
+        ${w.word}
+        <span class="pos-mini">${w.cn || ''}</span>
+        ${due ? '🔥' : (box >= 2 ? '✓' : '')}
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.word-chip').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.idx);
+        showWordDetail(state.customWords[idx], 'custom');
+      });
+    });
+  }
+
+  // 造句列表
+  const sList = document.getElementById('my-sentences-list');
+  const sEmpty = document.getElementById('my-sentences-empty');
+  const allSents = [];
+  for (const [word, arr] of Object.entries(state.sentences)) {
+    for (const s of arr) allSents.push({ word, ...s });
+  }
+  allSents.sort((a, b) => b.createdAt - a.createdAt);
+  document.getElementById('my-sentences-count').textContent = allSents.length;
+  if (allSents.length === 0) {
+    sList.innerHTML = '';
+    sEmpty.style.display = 'block';
+  } else {
+    sEmpty.style.display = 'none';
+    sList.innerHTML = allSents.slice(0, 20).map(s => `<div class="sentence-item">
+      <div class="sentence-item-en"><b>${s.word}</b> · ${s.en}</div>
+      <div class="sentence-item-time">${new Date(s.createdAt).toLocaleString()}</div>
+    </div>`).join('');
+  }
+}
+
+function updateMyStats() { if (state.tab === 'my') renderMy(); }
+
+/* ============================================================
+   🎬 语料提炼中心（SRT 解析 + 高频词统计）
+   ============================================================ */
+let CORPUS = { pairs: [], freq: [], activeWord: null };
+
+function handleCorpusFiles(files) {
+  const list = [...files].filter(f => /\.(srt|txt)$/i.test(f.name));
+  if (!list.length) { showToast('⚠️ 只支持 .srt / .txt 文件'); return; }
+  let loaded = 0;
+  const allPairs = [];
+  list.forEach(f => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      allPairs.push(...parseSrtPairs(reader.result));
+      if (++loaded === list.length) {
+        CORPUS.pairs = allPairs;
+        CORPUS.freq = countFreq(allPairs);
+        CORPUS.activeWord = null;
+        renderCorpusResult(list.map(f => f.name).join('、'));
+      }
+    };
+    reader.readAsText(f, 'utf-8');
+  });
+}
+
+function parseSrtPairs(text) {
+  const blocks = text.replace(/\r/g, '').split(/\n\s*\n/);
+  const pairs = [];
+  for (const b of blocks) {
+    const lines = b.split('\n').map(l => l.trim()).filter(l => l);
+    if (lines.length < 2) continue;
+    let i = 0;
+    if (/^\d+$/.test(lines[0])) i = 1;
+    if (i >= lines.length || !lines[i].includes('-->')) continue;
+    const content = lines.slice(i + 1);
+    const enLines = [], cnLines = [];
+    for (const l of content) {
+      const hasCn = /[\u4e00-\u9fff]/.test(l);
+      const enCount = (l.match(/[a-zA-Z]/g) || []).length;
+      if (hasCn && enCount < 3) cnLines.push(l);
+      else if (enCount > 0) enLines.push(l);
+      else cnLines.push(l);
+    }
+    const en = enLines.join(' ').replace(/\s+/g, ' ').trim();
+    const cn = cnLines.join(' ').trim();
+    if (en) pairs.push({ en, cn });
+  }
+  return pairs;
+}
+
+const STOP_WORDS = new Set(('the a an and or but of to in on at for with is are was were be been being i you he she it we they my your his her our their me him us them this that these those do does did have has had will would can could should shall may might as so if then than by from up down out off over under again there here what which who whom whose when where why how all any both each few more most other some such no nor not only own same too very just about into after before because while during like one two get got go went going come came know think want need see say said make made take took let look right ok okay yeah yes no please thanks thank well gonna wanna really actually uh um oh hey hi hello let us now back guys today time next good great nice isnt wasnt doesnt didnt wont wouldnt couldnt cant shouldnt dont').split(/\s+/));
+
+function countFreq(pairs) {
+  const freq = {};
+  for (const p of pairs) {
+    const words = p.en.toLowerCase().replace(/[^a-z\s'-]/g, ' ').split(/\s+/);
+    for (const w of words) {
+      const key = w.replace(/'/g, '');
+      if (!key || key.length < 3 || /^\d+$/.test(key) || STOP_WORDS.has(key)) continue;
+      freq[key] = freq[key] || { count: 0, samples: [] };
+      freq[key].count++;
+      if (freq[key].samples.length < 4) freq[key].samples.push({ en: p.en, cn: p.cn });
+    }
+  }
+  return Object.entries(freq).sort((a, b) => b[1].count - a[1].count).slice(0, 20)
+    .map(([w, v]) => ({ word: w, count: v.count, samples: v.samples }));
+}
+
+function renderCorpusResult(fileName) {
+  const box = document.getElementById('corpus-box');
+  box.classList.add('has-file');
+  document.getElementById('corpus-result').style.display = 'block';
+  document.getElementById('corpus-file-name').textContent = fileName.length > 22 ? fileName.slice(0, 22) + '…' : fileName;
+  document.getElementById('corpus-pair-count').textContent = CORPUS.pairs.length;
+  const vocab = new Set();
+  CORPUS.pairs.forEach(p => p.en.toLowerCase().replace(/[^a-z\s'-]/g, ' ').split(/\s+/).forEach(w => { if (w.length > 2 && !STOP_WORDS.has(w)) vocab.add(w); }));
+  document.getElementById('corpus-word-count').textContent = vocab.size;
+  document.getElementById('corpus-top-count').textContent = CORPUS.freq.length;
+  document.getElementById('corpus-pairs-title').textContent = `（${CORPUS.pairs.length} 句 · 点句子可看中文）`;
+
+  const kws = document.getElementById('corpus-kws');
+  kws.innerHTML = CORPUS.freq.map(f => `<div class="corpus-kw ${CORPUS.activeWord === f.word ? 'active' : ''}" data-w="${f.word}">${f.word}<span class="cnt">${f.count}</span></div>`).join('');
+
+  const ctx = document.getElementById('corpus-context');
+  if (CORPUS.activeWord) {
+    const f = CORPUS.freq.find(x => x.word === CORPUS.activeWord);
+    ctx.style.display = 'block';
+    ctx.innerHTML = `<div style="font-size:12px; font-weight:600; color:var(--primary); margin-bottom:6px;">「${f.word}」出现 ${f.count} 次 · 例句：</div>` +
+      f.samples.map(s => `<div class="corpus-ctx-item"><div class="corpus-ctx-en">${highlightWord(s.en, f.word)}</div>${s.cn ? `<div class="corpus-ctx-cn">${s.cn}</div>` : ''}</div>`).join('');
+  } else {
+    ctx.style.display = 'none';
+  }
+
+  const pairs = document.getElementById('corpus-pairs');
+  pairs.innerHTML = CORPUS.pairs.slice(0, 200).map((p, i) => `<div class="corpus-pair">
+    <div class="corpus-pair-idx">${i + 1}</div>
+    <div class="corpus-pair-en">${CORPUS.activeWord ? highlightWord(p.en, CORPUS.activeWord) : p.en}</div>
+    <div class="corpus-pair-cn">${p.cn || ''}</div>
+  </div>`).join('') + (CORPUS.pairs.length > 200 ? `<div style="text-align:center; color:var(--text-soft); font-size:11px; padding:10px;">…仅显示前 200 句</div>` : '');
+
+  kws.querySelectorAll('.corpus-kw').forEach(el => el.addEventListener('click', () => {
+    CORPUS.activeWord = CORPUS.activeWord === el.dataset.w ? null : el.dataset.w;
+    renderCorpusResult(document.getElementById('corpus-file-name').textContent);
+  }));
+  pairs.querySelectorAll('.corpus-pair').forEach(el => {
+    el.addEventListener('click', () => { el.classList.toggle('open'); });
+  });
+}
+
+function highlightWord(sentence, word) {
+  const re = new RegExp('(' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+  return sentence.replace(re, '<mark>$1</mark>');
+}
+
+function exportCorpusJson() {
+  const data = { file: document.getElementById('corpus-file-name').textContent, pairs: CORPUS.pairs, freq: CORPUS.freq };
+  const blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'corpus_' + Date.now() + '.json';
+  a.click();
+  showToast('💾 JSON 已导出（可直接交给阿智入库）');
+}
+
+/* ============================================================
+   📷 卡片工坊（小红书风格词汇卡片生成器）
+   ============================================================ */
+const STYLE_PRESETS = {
+  candy:   { bg: '#fff5e1', heroBg: '#ffd5d0', accent: '#e74c3c', deco: ['🍓', '🍒', '🍑', '🌸'] },
+  cream:   { bg: '#fdf6e3', heroBg: '#fae5d3', accent: '#d35400', deco: ['☕', '🍯', '🥐', '🌼'] },
+  morandi: { bg: '#e8e4dc', heroBg: '#c7b9a3', accent: '#6b6259', deco: ['🍂', '🪴', '📖', '🕯️'] },
+  forest:  { bg: '#e8f3e0', heroBg: '#b8d8a8', accent: '#27ae60', deco: ['🌿', '🍀', '🌳', '🦋'] }
+};
+
+/* 卡片工坊：一级分类 chips */
+function renderCardCatChips() {
+  const chips = document.getElementById('card-cat-chips');
+  chips.innerHTML = LIFE_CATEGORIES.map(c => `
+    <div class="cat-chip ${c.key === state.cardCategory ? 'active' : ''}" data-key="${c.key}">${c.emoji} ${c.name}</div>
+  `).join('');
+  chips.querySelectorAll('.cat-chip').forEach(el => {
+    el.addEventListener('click', () => {
+      state.cardCategory = el.dataset.key;
+      renderCardCatChips();
+      renderCardLifeGrid();
+    });
+  });
+}
+
+/* 卡片工坊：当前分类的二级场景网格 */
+function renderCardLifeGrid() {
+  const grid = document.getElementById('card-life-grid');
+  const items = Object.entries(LIFE_SCENES).filter(([, v]) => v.parent === state.cardCategory);
+  grid.innerHTML = items.map(([k, v]) => `
+    <div class="life-card-item ${k === state.currentLife ? 'active' : ''}" data-key="${k}">
+      <span class="life-card-emoji">${v.emoji}</span>
+      <div class="life-card-name">${v.name}</div>
+      <div class="life-card-sub">${v.source === 'youtube' ? '🎬 真实语料' : ''} ${v.nouns.length}名 · ${v.actions.length}动</div>
+    </div>`).join('');
+  grid.querySelectorAll('.life-card-item').forEach(el => {
+    el.addEventListener('click', () => {
+      state.currentLife = el.dataset.key;
+      renderCardLifeGrid();
+      renderCard();
+    });
+  });
+}
+
+/* 打开卡片工坊 */
+function openCardOverlay(sceneKey) {
+  if (sceneKey && LIFE_SCENES[sceneKey]) {
+    state.currentLife = sceneKey;
+    state.cardCategory = LIFE_SCENES[sceneKey].parent;
+  }
+  if (!state.cardCategory) state.cardCategory = LIFE_CATEGORIES[0].key;
+  if (!state.currentLife) {
+    const first = Object.entries(LIFE_SCENES).find(([, v]) => v.parent === state.cardCategory);
+    if (first) state.currentLife = first[0];
+  }
+  renderCardCatChips();
+  renderCardLifeGrid();
+  renderCard();
+  document.getElementById('card-overlay').classList.add('open');
+}
+
+function closeCardOverlay() {
+  document.getElementById('card-overlay').classList.remove('open');
+}
+
+/* 生活微场景卡片（小红书风格：名词词块 + 动作短语） */
+function renderLifeCard(canvas, preset, life) {
+  let html = '';
+  const deco = preset.deco;
+  html += `<div class="card-deco d1">${deco[0]}</div>`;
+  html += `<div class="card-deco d2">${deco[1]}</div>`;
+  html += `<div class="card-deco d3">${deco[3]}</div>`;
+  html += `<div class="card-deco d4">${deco[2]}</div>`;
+
+  // 主词 hero
+  html += `
+    <div class="card-hero" style="background:${preset.heroBg};">
+      <div class="card-hero-icon">${life.emoji}</div>
+      <div class="card-hero-title" style="color:${preset.accent}">${life.en}</div>
+      <div class="card-hero-sub">${life.name} · 生活场景英语</div>
+    </div>
+  `;
+
+  // 名词词块
+  html += `<div class="card-section-title">📦 单词 · Words <span style="font-size:10px; opacity:0.6; font-weight:500;">(名词)</span></div>`;
+  html += '<div class="card-words">';
+  for (const n of life.nouns) {
+    html += `<div class="card-word">
+      <div class="card-word-en">${n.en}</div>
+      <div class="card-word-cn">${n.cn}</div>
+    </div>`;
+  }
+  html += '</div>';
+
+  // 动作短语
+  html += `<div class="card-section-title">👆 动作 · Actions <span style="font-size:10px; opacity:0.6; font-weight:500;">(动词短语)</span></div>`;
+  html += '<div class="card-action-list">';
+  const icons = ['👉', '🥄', '💡', '📌', '✏️', '🎯'];
+  life.actions.forEach((a, i) => {
+    const icon = icons[i % icons.length];
+    html += `<div class="card-action">
+      <span class="card-action-icon">${icon}</span>
+      <div>
+        <div class="card-action-en">${a.en}</div>
+        <div class="card-action-cn">${a.cn}</div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+
+  // 底部
+  html += `<div class="card-tip">🧠 一个场景记一组词 · 每天一张<br><span style="opacity:0.7;">拾词 WordPick · 真实场景学单词</span></div>`;
+
+  canvas.innerHTML = html;
+}
+
+function renderCard() {
+  const canvas = document.getElementById('card-canvas');
+  const preset = STYLE_PRESETS[state.cardStyle] || STYLE_PRESETS.candy;
+  canvas.style.background = preset.bg;
+
+  if (!state.currentLife || !LIFE_SCENES[state.currentLife]) {
+    const first = Object.entries(LIFE_SCENES)[0];
+    if (first) { state.currentLife = first[0]; state.cardCategory = first[1].parent; }
+  }
+  const life = LIFE_SCENES[state.currentLife];
+  if (!life) return;
+  renderLifeCard(canvas, preset, life);
+  const cat = LIFE_CATEGORIES.find(c => c.key === life.parent);
+  document.getElementById('card-level-tag').textContent = `${cat ? cat.emoji : '🍳'} ${cat ? cat.name : '生活场景'} · ${life.name}`;
+}
+
+function downloadCard() {
+  const canvas = document.getElementById('card-canvas');
+  if (typeof html2canvas === 'undefined') {
+    showToast('截图库加载中... 请稍候');
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    s.onload = () => doDownload(canvas);
+    document.head.appendChild(s);
+    return;
+  }
+  doDownload(canvas);
+}
+
+function doDownload(canvas) {
+  html2canvas(canvas, {
+    backgroundColor: null,
+    scale: 2,
+    useCORS: true,
+    logging: false
+  }).then((img) => {
+    const a = document.createElement('a');
+    const scene = state.currentCardScene || state.currentCardTheme || 'card';
+    a.download = `vocab-card-${scene}-${Date.now()}.png`;
+    a.href = img.toDataURL('image/png');
+    a.click();
+    showToast('📥 卡片已下载！');
+  }).catch(err => {
+    showToast('下载失败：' + err.message);
+  });
+}
+
+function importWords(text) {
+  if (!text.trim()) return 0;
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  let added = 0;
+  for (const line of lines) {
+    let word = '', pos = 'n.', cn = '';
+    if (line.includes('\t')) {
+      const [w, c] = line.split('\t');
+      word = w.trim(); cn = c.trim();
+    } else if (line.includes(',')) {
+      const parts = line.split(',').map(s => s.trim());
+      word = parts[0];
+      if (parts[1] && /^[nvadjvprep]+\.?$/i.test(parts[1])) pos = parts[1];
+      cn = parts.slice(pos === parts[1] ? 2 : 1).join(', ') || parts[1] || '';
+    } else {
+      const m = line.match(/^(\S+)\s+(.+)$/);
+      if (m) { word = m[1]; cn = m[2]; }
+      else word = line;
+    }
+    if (word && !state.customWords.find(x => x.word === word)) {
+      state.customWords.push({ word, pos, cn, phonetic: '', breakdown: '', example: { en: '', cn: '' } });
+      added++;
+    }
+  }
+  saveState();
+  return added;
+}
+
+function exportData() {
+  const data = {
+    customWords: state.customWords,
+    sentences: state.sentences,
+    mastered: state.mastered,
+    review: state.review,
+    exportTime: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'mindmap-vocab-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  showToast('💾 已导出 JSON');
+}
+
+/* ============================================================
+   🎬 图片上传
+   ============================================================ */
+function handleImageUpload(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const card = document.getElementById('upload-card');
+    card.classList.add('has-image');
+    card.innerHTML = `<img src="${e.target.result}" alt=""><button class="upload-change" id="upload-change">更换</button><input type="file" id="file-input" accept="image/*" style="display:none">`;
+    document.getElementById('upload-change').onclick = (e) => { e.preventDefault(); e.stopPropagation(); document.getElementById('file-input').click(); };
+    document.getElementById('file-input').onchange = (e) => { if (e.target.files[0]) handleImageUpload(e.target.files[0]); };
+    autoMatchScene(file.name);
+  };
+  reader.readAsDataURL(file);
+}
+
+function autoMatchScene(name) {
+  const lower = (name || '').toLowerCase();
+  let matched = null, maxScore = 0;
+  for (const [k, v] of Object.entries(SCENES)) {
+    let s = 0;
+    for (const kw of v.keywords) if (lower.includes(kw)) s += 2;
+    if (s > maxScore) { maxScore = s; matched = k; }
+  }
+  state.currentScene = matched || 'airport';
+  renderSidebar();
+  if (state.currentScene) openSceneViewer(state.currentScene);
+  showToast(`🖼️ 识别为「${SCENES[state.currentScene].name}」`);
+}
+
+/* ============================================================
+   🛠 工具
+   ============================================================ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function switchTab(tab) {
+  state.tab = tab;
+  document.querySelectorAll('.main-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('root-mode').style.display = tab === 'root' ? 'flex' : 'none';
+  document.getElementById('theme-mode').style.display = tab === 'theme' ? 'flex' : 'none';
+  document.getElementById('scene-mode').style.display = tab === 'scene' ? 'flex' : 'none';
+  document.getElementById('my-mode').style.display = tab === 'my' ? 'flex' : 'none';
+  if (tab === 'theme' && !state.currentTheme) state.currentTheme = Object.keys(THEMES)[0];
+  if (tab === 'scene') {
+    renderLookSceneChips();
+    renderLookStage();
+  }
+  renderAll();
+}
+
+function renderAll() {
+  renderSidebar();
+  if (state.tab === 'root') renderMindmap();
+  else if (state.tab === 'theme') renderThemeWords();
+  else if (state.tab === 'scene') { renderLookSceneChips(); renderLookStage(); }
+  else if (state.tab === 'my') renderMy();
+}
+
+/* ============================================================
+   🏙️ 场景统一视图（合并空间场景 + 生活场景，按 28 大类浏览）
+   ============================================================ */
+
+/* 收集所有场景（生活+空间），标注 type 和 category */
+function collectScenes() {
+  const items = [];
+  // 生活细分场景
+  for (const [k, v] of Object.entries(LIFE_SCENES)) {
+    items.push({ key: k, type: 'life', data: v, cat: v.parent, hasImg: !!SCENE_IMAGES[k] });
+  }
+  // 空间场景（按 SCENE_TO_CATEGORY 归类）
+  for (const [k, v] of Object.entries(SCENES)) {
+    const cat = SCENE_TO_CATEGORY[k] || 'shopping';
+    items.push({ key: k, type: 'space', data: v, cat, hasImg: false });
+  }
+  return items;
+}
+
+function renderSceneCatList() {
+  const list = document.getElementById('scene-cat-list');
+  if (!list) return;
+  const items = collectScenes();
+  const total = items.length;
+  // 统计每类数量
+  const byCat = {};
+  for (const it of items) byCat[it.cat] = (byCat[it.cat] || 0) + 1;
+  const cats = [{ key: 'all', name: '全部', emoji: '🌐', count: total }].concat(
+    LIFE_CATEGORIES.map(c => ({ key: c.key, name: c.name, emoji: c.emoji, count: byCat[c.key] || 0 }))
+  );
+  list.innerHTML = cats.filter(c => c.count > 0).map(c => `
+    <div class="cat-chip ${c.key === state.sceneCatKey ? 'active' : ''}" data-key="${c.key}">
+      ${c.emoji} ${c.name} <span style="opacity:0.7; margin-left:3px; font-size:10px;">${c.count}</span>
+    </div>
+  `).join('');
+  // 用 cat-chip 样式（统一）
+  list.querySelectorAll('.cat-chip').forEach(el => {
+    el.addEventListener('click', () => {
+      state.sceneCatKey = el.dataset.key;
+      renderSceneCatList();
+      renderSceneGrid();
+    });
+  });
+}
+
+function renderSceneGrid() {
+  const root = document.getElementById('scene-grid-root');
+  if (!root) return;
+  const items = collectScenes();
+  const filtered = state.sceneCatKey === 'all' ? items : items.filter(it => it.cat === state.sceneCatKey);
+  if (filtered.length === 0) {
+    root.innerHTML = '<div style="text-align:center; color:var(--text-soft); padding:40px;">该分类下暂无场景</div>';
+    return;
+  }
+  root.innerHTML = '<div class="scene-mixed-grid">' + filtered.map(it => {
+    const img = it.hasImg ? SCENE_IMAGES[it.key] : null;
+    const badge = it.hasImg
+      ? '<span class="scene-card-badge yt">📸 真实插图</span>'
+      : '<span class="scene-card-badge space">' + (it.type === 'space' ? '🛫 空间' : '📚 手写') + '</span>';
+    const sub = it.type === 'life'
+      ? (it.data.source === 'youtube' ? '🎬 YouTube 真实语料' : '') + ` · ${it.data.nouns.length} 名词 · ${it.data.actions.length} 动作`
+      : `${it.data.words.length} 词 · 空间场景`;
+    const imgWrap = img
+      ? `<div class="scene-card-img-wrap"><img class="scene-card-img" src="${img}" alt="${it.data.name}" loading="lazy"><div class="scene-card-emoji-overlay">${it.data.emoji}</div>${badge}</div>`
+      : `<div class="scene-card-img-wrap" style="background:linear-gradient(135deg, #ffe5e0 0%, #fff 100%); display:flex; align-items:center; justify-content:center;"><span style="font-size:56px;">${it.data.emoji}</span>${badge.replace('scene-card-badge','scene-card-badge')}</div>`;
+    return `<div class="scene-card" data-key="${it.key}">
+      ${imgWrap}
+      <div class="scene-card-body">
+        <div class="scene-card-name">${it.data.name}</div>
+        <div class="scene-card-sub">${sub}</div>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+  root.querySelectorAll('.scene-card').forEach(el => {
+    el.addEventListener('click', () => {
+      const it = collectScenes().find(x => x.key === el.dataset.key);
+      if (it && it.type === 'space') openSceneViewer(el.dataset.key);
+      else openSceneHub(el.dataset.key);
+    });
+  });
+}
+
+/* 场景学习中心：选学习方式（词汇/导图/游戏/看图） */
+function openSceneHub(key) {
+  const life = LIFE_SCENES[key];
+  if (!life) return;
+  document.getElementById('hub-emoji').textContent = life.emoji;
+  document.getElementById('hub-title').textContent = life.name;
+  document.getElementById('hub-sub').textContent =
+    `${life.en || ''} · ${life.nouns.length} 名词 · ${life.actions.length} 动作${life.source === 'youtube' ? ' · 🎬 YouTube 语料' : ''}`;
+
+  const hasMap = !!SCENE_MAPS[key];
+  const hasLook = !!LOOK_LEARN[key];
+  const modes = [
+    { key: 'grid', emoji: '🗂️', name: '词汇卡', sub: '名词 + 动作 一览', ok: true },
+    { key: 'map', emoji: '🧠', name: '思维导图', sub: '场景结构图', ok: hasMap },
+    { key: 'game', emoji: '🎮', name: '小游戏', sub: '翻卡学习 + 测试', ok: true },
+    { key: 'look', emoji: '📷', name: '看图学词', sub: '真实照片 + 点开答案', ok: hasLook }
+  ];
+  document.getElementById('hub-modes').innerHTML = modes.map(m => `
+    <div class="hub-mode ${m.ok ? '' : 'disabled'}" data-mode="${m.key}">
+      <span class="hub-mode-emoji">${m.emoji}</span>
+      <div class="hub-mode-name">${m.name}</div>
+      <div class="hub-mode-sub">${m.ok ? m.sub : '🔥 即将上线'}</div>
+    </div>
+  `).join('');
+  document.querySelectorAll('#hub-modes .hub-mode').forEach(el => {
+    el.addEventListener('click', () => {
+      const mode = el.dataset.mode;
+      if (!modes.find(m => m.key === mode).ok) return;
+      // 预置场景状态
+      if (mode === 'map') { state.mapScene = key; }
+      if (mode === 'game') { G.scene = key; }
+      if (mode === 'look') { LOOK.scene = key; LOOK.vIdx = 0; LOOK.revealed = false; }
+      if (mode === 'grid') { state.sceneCatKey = 'all'; }
+      closeSceneHub();
+      switchSceneView2(mode);
+      // grid 模式需要回到场景网格并高亮
+      if (mode === 'grid') {
+        renderSceneCatList();
+        renderSceneGrid();
+        // 滚动到该场景
+        const card = document.querySelector(`.scene-card[data-key="${key}"]`);
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+  document.getElementById('scene-hub').classList.add('open');
+}
+
+function closeSceneHub() {
+  document.getElementById('scene-hub').classList.remove('open');
+}
+
+/* 互动 viewer：大图 + 词汇 */
+function openSceneViewer(key) {
+  const item = collectScenes().find(it => it.key === key);
+  if (!item) return;
+  const img = SCENE_IMAGES[key];
+  const data = item.data;
+  document.getElementById('viewer-emoji').textContent = data.emoji;
+  document.getElementById('viewer-title').textContent = data.name;
+  document.getElementById('viewer-sub').textContent =
+    `${data.en || ''} · ${item.type === 'space' ? '空间场景' : (data.source === 'youtube' ? 'YouTube 真实语料' : '手写场景')}`;
+  const body = document.getElementById('viewer-body');
+  let html = '';
+  if (img) {
+    html += `<img class="scene-viewer-img" src="${img}" alt="${data.name}">`;
+  } else {
+    html += `<div style="height:180px; background:linear-gradient(135deg, #ffe5e0 0%, #fff 100%); display:flex; align-items:center; justify-content:center; font-size:96px;">${data.emoji}</div>`;
+  }
+  html += '<div class="scene-viewer-content">';
+  if (item.type === 'life' && data.nouns && data.nouns.length) {
+    html += `<div class="viewer-section">
+      <div class="viewer-section-title">📦 单词 · Words (${data.nouns.length})</div>
+      <div class="viewer-nouns">${data.nouns.map(n => `<div class="viewer-noun"><b>${n.en}</b><br><span style="font-size:11px; opacity:0.75;">${n.cn}</span></div>`).join('')}</div>
+    </div>`;
+    if (data.actions && data.actions.length) {
+      html += `<div class="viewer-section">
+        <div class="viewer-section-title">👆 动作 · Actions (${data.actions.length})</div>
+        <div class="viewer-actions">${data.actions.map(a => `<div class="viewer-action"><div class="viewer-act-en">${a.en}</div><div style="opacity:0.75;">${a.cn}</div></div>`).join('')}</div>
+      </div>`;
+    }
+  } else if (item.type === 'space' && data.words && data.words.length) {
+    html += `<div class="viewer-section">
+      <div class="viewer-section-title">📖 词汇 (${data.words.length})</div>
+      <div class="viewer-words">${data.words.map(w => `<div class="viewer-word"><b>${w.word}</b> <span style="opacity:0.6; font-size:11px;">${w.cn}</span></div>`).join('')}</div>
+    </div>`;
+    const examples = data.words.filter(w => w.example).slice(0, 4);
+    if (examples.length) {
+      html += `<div class="viewer-section">
+        <div class="viewer-section-title">💬 例句</div>
+        <div class="viewer-actions">${examples.map(e => `<div class="viewer-action"><div class="viewer-act-en">${e.example.en}</div><div style="opacity:0.75;">${e.example.cn}</div></div>`).join('')}</div>
+      </div>`;
+    }
+  }
+  html += '</div>';
+  body.innerHTML = html;
+  document.getElementById('scene-viewer').classList.add('open');
+}
+function closeSceneViewer() {
+  document.getElementById('scene-viewer').classList.remove('open');
+}
+
+/* ============================================================
+   🧠 场景思维导图（中心场景 → 4 维度 → 表达卡片，多风格）
+   ============================================================ */
+const MAP_DIM_ANGLES = { vocab: -135, actions: -45, sentences: 45, tips: 135 };
+const MAP_DIM_ORDER = ['vocab', 'actions', 'sentences', 'tips'];
+
+function switchSceneView2(view) {
+  state.sceneView2 = view;
+  const gridArea = document.getElementById('scene-grid-area').parentElement;
+  const mapArea = document.getElementById('scene-map-area');
+  const gameArea = document.getElementById('scene-game-area');
+  const lookArea = document.getElementById('scene-look-area');
+  gridArea.style.display = view === 'grid' ? 'flex' : 'none';
+  mapArea.style.display = view === 'map' ? 'flex' : 'none';
+  gameArea.style.display = view === 'game' ? 'flex' : 'none';
+  lookArea.style.display = view === 'look' ? 'flex' : 'none';
+  if (view === 'map') {
+    renderMapStyleChips();
+    renderMapSceneChips();
+    renderSceneMap();
+  }
+  if (view === 'game') {
+    renderGameSceneChips();
+    if (G.scene && LIFE_SCENES[G.scene]) startGame(G.scene); else renderGamePick();
+  }
+  if (view === 'look') {
+    renderLookSceneChips();
+    renderLookStage();
+  }
+}
+
+function renderMapStyleChips() {
+  const chips = document.getElementById('map-style-chips');
+  chips.innerHTML = Object.entries(MAP_STYLES).map(([k, v]) =>
+    `<div class="cat-chip ${k === state.mapStyle ? 'active' : ''}" data-key="${k}">${v.name}</div>`
+  ).join('');
+  chips.querySelectorAll('.cat-chip').forEach(el => {
+    el.addEventListener('click', () => {
+      state.mapStyle = el.dataset.key;
+      renderMapStyleChips();
+      renderSceneMap();
+    });
+  });
+}
+
+function renderMapSceneChips() {
+  const chips = document.getElementById('map-scene-chips');
+  chips.innerHTML = Object.entries(SCENE_MAPS).map(([k, v]) =>
+    `<div class="cat-chip ${k === state.mapScene ? 'active' : ''}" data-key="${k}">${v.emoji} ${v.name}</div>`
+  ).join('');
+  chips.querySelectorAll('.cat-chip').forEach(el => {
+    el.addEventListener('click', () => {
+      state.mapScene = el.dataset.key;
+      renderMapSceneChips();
+      renderSceneMap();
+    });
+  });
+}
+
+function mapTextWidth(s) {
+  let w = 0;
+  for (const ch of s) w += /[\u4e00-\u9fff]/.test(ch) ? 14 : 8;
+  return w;
+}
+
+function renderSceneMap() {
+  const svg = document.getElementById('scene-map-svg');
+  const map = SCENE_MAPS[state.mapScene];
+  const st = MAP_STYLES[state.mapStyle];
+  if (!map || !st) return;
+  const W = 1100, H = 820, cx = W / 2, cy = H / 2;
+  let html = '';
+  // 背景
+  html += `<rect x="0" y="0" width="${W}" height="${H}" fill="${st.bg}" rx="16"/>`;
+
+  // 中心节点
+  html += `<circle cx="${cx}" cy="${cy}" r="${st.radius}" fill="${st.centerFill}" stroke="${st.centerText}" stroke-width="2.5"/>`;
+  html += `<text x="${cx}" y="${cy - 6}" text-anchor="middle" font-size="30" font-weight="bold">${map.emoji}</text>`;
+  html += `<text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="14" font-weight="bold" fill="${st.centerText}">${map.name}</text>`;
+
+  // 维度 + 节点
+  MAP_DIM_ORDER.forEach((dimKey, di) => {
+    const dim = map.dims.find(d => d.key === dimKey);
+    if (!dim) return;
+    const base = MAP_DIM_ANGLES[dimKey];
+    const n = dim.items.length;
+    // 维度标签（半径 140）
+    const [lx, ly] = mapPos(cx, cy, 142, base);
+    html += `<line x1="${cx}" y1="${cy}" x2="${lx}" y2="${ly}" stroke="${st.line}" stroke-width="3"/>`;
+    html += `<g transform="translate(${lx}, ${ly})">
+      <circle r="26" fill="${dim.color}" opacity="0.15"/>
+      <circle r="20" fill="white" stroke="${dim.color}" stroke-width="2"/>
+      <text text-anchor="middle" y="5" font-size="16">${dim.emoji}</text>
+    </g>`;
+    html += `<text x="${lx}" y="${ly - 32}" text-anchor="middle" font-size="12" font-weight="bold" fill="${dim.color}">${dim.label}</text>`;
+
+    // 维度内 item 节点（图标 + 英文 + 中文 三合一卡片）
+    const span = Math.min(84, 40 + n * 8);
+    for (let i = 0; i < n; i++) {
+      const angle = base + (n === 1 ? 0 : (i / (n - 1) - 0.5) * 2 * span * 0.85);
+      const r = n > 6 ? (i % 2 === 0 ? 240 : 310) : 255;
+      const [nx, ny] = mapPos(cx, cy, r, angle);
+      const item = dim.items[i];
+      const icon = item.icon || dim.emoji;
+      const enW = mapTextWidth(item.en);
+      const cnW = mapTextWidth(item.cn || '');
+      const w = Math.max(enW, cnW) + 58; // 图标区 34 + 边距 24
+      const h = 56;
+      // 连线（维度标签 → 节点）
+      html += `<line x1="${lx}" y1="${ly}" x2="${nx}" y2="${ny}" stroke="${st.line}" stroke-width="1.5" opacity="0.7" stroke-dasharray="4,3"/>`;
+      // 节点卡片
+      html += `<g class="map-node" data-en="${esc(item.en)}" data-cn="${esc(item.cn)}" data-tip="${esc(item.tip || '')}" data-dim="${dim.label}" transform="translate(${nx}, ${ny})" cursor="pointer">
+        <rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" rx="15" fill="${st.nodeFill}" stroke="${dim.color}" stroke-width="1.8"/>
+        <rect x="${-w / 2}" y="${-h / 2}" width="34" height="${h}" rx="15" fill="${dim.color}" opacity="0.12"/>
+        <text x="${-w / 2 + 17}" y="4" text-anchor="middle" font-size="20" style="pointer-events:none;">${icon}</text>
+        <text x="${-w / 2 + 46}" y="${-7}" font-size="13" font-weight="600" fill="${st.nodeText}" style="pointer-events:none;">${item.en}</text>
+        <text x="${-w / 2 + 46}" y="${13}" font-size="10" fill="${dim.color}" opacity="0.85" style="pointer-events:none;">${item.cn}</text>
+      </g>`;
+    }
+  });
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  svg.innerHTML = html;
+
+  // 节点点击 → 详情弹窗
+  svg.querySelectorAll('.map-node').forEach(el => {
+    el.addEventListener('click', () => {
+      openMapNodeDetail(el.dataset.en, el.dataset.cn, el.dataset.tip, el.dataset.dim, el);
+    });
+  });
+}
+
+function mapPos(cx, cy, r, angleDeg) {
+  const a = angleDeg * Math.PI / 180;
+  return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+}
+function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+/* 节点详情弹窗（卡片感） */
+function openMapNodeDetail(en, cn, tip, dim, el) {
+  const panel = document.getElementById('detail-panel');
+  document.getElementById('d-word').textContent = en;
+  document.getElementById('d-phonetic').textContent = '';
+  document.getElementById('d-levels').innerHTML = `<span class="level-badge IELTS">${dim}</span>`;
+  document.getElementById('d-meaning').innerHTML = `<span class="detail-pos">表达</span>${cn}`;
+  const exEl = document.getElementById('d-example');
+  if (tip) {
+    exEl.style.display = 'block';
+    exEl.querySelector('.detail-example-en').textContent = '💡 ' + tip;
+    exEl.querySelector('.detail-example-cn').textContent = '记忆要点';
+  } else exEl.style.display = 'none';
+  document.getElementById('d-etymology-section').style.display = 'none';
+  document.getElementById('d-collo-section').style.display = 'none';
+  document.getElementById('d-syno-section').style.display = 'none';
+  document.getElementById('d-pitfall-section').style.display = 'none';
+  // 造句区隐藏（场景表达不造句）
+  document.getElementById('d-save-sentence').parentElement.parentElement.style.display = 'none';
+  // 复习按钮区隐藏
+  document.querySelector('.detail-actions').style.display = 'none';
+  document.getElementById('d-close').onclick = () => panel.classList.remove('open');
+  panel.classList.add('open');
+}
+
+/* ============================================================
+   🎮 场景学习小游戏（翻卡片学习 → 测试练习）
+   ============================================================ */
+const G = { scene: null, cards: [], idx: 0, flipped: false, quiz: [], qIdx: 0, score: 0, answered: false, errors: [] };
+const GAME_TYPE = { n: { label: '词汇', color: '#3498db' }, a: { label: '动作', color: '#e67e22' } };
+
+function shuffleArr(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function renderGameSceneChips() {
+  const chips = document.getElementById('game-scene-chips');
+  const list = Object.entries(LIFE_SCENES).slice(0, 24);
+  chips.innerHTML = list.map(([k, v]) =>
+    `<div class="cat-chip ${k === G.scene ? 'active' : ''}" data-key="${k}">${v.emoji} ${v.name}</div>`
+  ).join('') + '<div class="cat-chip" data-key="__more" style="border-style:dashed;">➕ 更多</div>';
+  chips.querySelectorAll('.cat-chip').forEach(el => {
+    el.addEventListener('click', () => {
+      if (el.dataset.key === '__more') {
+        chips.innerHTML = Object.entries(LIFE_SCENES).map(([k, v]) =>
+          `<div class="cat-chip ${k === G.scene ? 'active' : ''}" data-key="${k}">${v.emoji} ${v.name}</div>`
+        ).join('');
+        chips.querySelectorAll('.cat-chip').forEach(c => c.addEventListener('click', () => {
+          G.scene = c.dataset.key; renderGameSceneChips(); startGame(G.scene);
+        }));
+        return;
+      }
+      G.scene = el.dataset.key;
+      renderGameSceneChips();
+      startGame(G.scene);
+    });
+  });
+}
+
+function buildGameCards(key) {
+  const s = LIFE_SCENES[key];
+  const cards = [];
+  const map = SCENE_MAPS[key];
+  const img = SCENE_IMAGES[key] || null;
+  for (const n of s.nouns) cards.push({ type: 'n', en: n.en, cn: n.cn, img, icon: null });
+  for (const a of s.actions) {
+    let icon = '👆';
+    if (map) {
+      const mi = map.dims.find(d => d.key === 'actions');
+      if (mi) {
+        const hit = mi.items.find(x => x.en.toLowerCase() === a.en.toLowerCase());
+        if (hit && hit.icon) icon = hit.icon;
+      }
+    }
+    cards.push({ type: 'a', en: a.en, cn: a.cn, img: null, icon });
+  }
+  return cards;
+}
+
+function cardExample(key) {
+  const map = SCENE_MAPS[key];
+  if (!map) return null;
+  const se = map.dims.find(d => d.key === 'sentences');
+  if (!se || !se.items.length) return null;
+  const ex = se.items[Math.floor(Math.random() * se.items.length)];
+  return { en: ex.en, cn: ex.cn };
+}
+
+function startGame(key) {
+  G.scene = key;
+  G.cards = buildGameCards(key);
+  G.idx = 0;
+  G.flipped = false;
+  G.errors = [];
+  renderGameCard();
+}
+
+function renderGameCard() {
+  const stage = document.getElementById('game-stage');
+  if (!G.cards.length) return;
+  const card = G.cards[G.idx];
+  const t = GAME_TYPE[card.type];
+  const ex = cardExample(G.scene);
+  const imgHtml = card.img
+    ? `<img src="${card.img}" alt="">`
+    : `<span class="big-icon">${card.icon || '🃏'}</span>`;
+  stage.innerHTML = `
+    <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
+      <div class="game-top">
+        <span class="game-progress">📖 学习 ${G.idx + 1} / ${G.cards.length}</span>
+        <span class="game-score">${LIFE_SCENES[G.scene].emoji} ${LIFE_SCENES[G.scene].name}</span>
+      </div>
+      <div class="game-card-wrap">
+        <div class="game-card ${G.flipped ? 'flipped' : ''}" id="game-card">
+          <div class="game-face game-face-front">
+            <div class="game-face-img" style="background:${t.color}22;">${imgHtml}</div>
+            <div class="game-face-body">
+              <span class="game-type-tag" style="background:${t.color}; color:white;">${t.label}</span>
+              <div class="game-en">${card.en}</div>
+              <div class="game-hint">👆 点卡片翻面看中文</div>
+            </div>
+          </div>
+          <div class="game-face game-face-back">
+            <div class="game-face-img" style="background:${t.color}22;">${imgHtml}</div>
+            <div class="game-face-body">
+              <span class="game-type-tag" style="background:${t.color}; color:white;">${t.label}</span>
+              <div class="game-en" style="font-size:20px;">${card.en}</div>
+              <div class="game-cn">${card.cn}</div>
+              ${ex ? `<div class="game-ex"><div class="game-ex-en">${ex.en}</div><div class="game-ex-cn">${ex.cn}</div></div>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="game-hint" style="margin-top:8px;">点击卡片翻面 · 记住后点"下一张"</div>
+      <div class="game-controls">
+        <button class="btn" id="game-prev" ${G.idx === 0 ? 'disabled' : ''}>👈 上一张</button>
+        <button class="btn btn-primary" id="game-next">${G.idx === G.cards.length - 1 ? '✅ 开始测试' : '下一张 👉'}</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('game-card').addEventListener('click', () => {
+    G.flipped = !G.flipped;
+    document.getElementById('game-card').classList.toggle('flipped', G.flipped);
+  });
+  document.getElementById('game-prev').addEventListener('click', () => {
+    if (G.idx > 0) { G.idx--; G.flipped = false; renderGameCard(); }
+  });
+  document.getElementById('game-next').addEventListener('click', () => {
+    if (G.idx < G.cards.length - 1) { G.idx++; G.flipped = false; renderGameCard(); }
+    else startQuiz();
+  });
+}
+
+let _gameCardCache = null;
+function allGameCards() {
+  if (_gameCardCache) return _gameCardCache;
+  _gameCardCache = [];
+  for (const [k, s] of Object.entries(LIFE_SCENES)) {
+    for (const n of s.nouns) _gameCardCache.push({ en: n.en, cn: n.cn });
+    for (const a of s.actions) _gameCardCache.push({ en: a.en, cn: a.cn });
+  }
+  return _gameCardCache;
+}
+
+function startQuiz() {
+  const pool = shuffleArr(G.cards).slice(0, Math.min(10, G.cards.length));
+  G.quiz = pool.map(card => {
+    const distract = shuffleArr(
+      G.cards.filter(c => c.en !== card.en)
+        .concat(allGameCards().filter(c => c.en !== card.en))
+    ).slice(0, 3);
+    return { card, options: shuffleArr([card.en, ...distract.map(d => d.en)]) };
+  });
+  G.qIdx = 0;
+  G.score = 0;
+  G.answered = false;
+  G.errors = [];
+  renderQuizQ();
+}
+
+function renderQuizQ() {
+  const stage = document.getElementById('game-stage');
+  if (G.qIdx >= G.quiz.length) { showGameResult(); return; }
+  const q = G.quiz[G.qIdx];
+  stage.innerHTML = `
+    <div class="quiz-wrap">
+      <div class="game-top">
+        <span class="game-progress">🎯 测试 ${G.qIdx + 1} / ${G.quiz.length}</span>
+        <span class="game-score">得分 ${G.score}</span>
+      </div>
+      <div class="quiz-qnum">第 ${G.qIdx + 1} 题</div>
+      <div class="quiz-prompt">选出对应的英文表达：</div>
+      <div class="quiz-question">${q.card.cn}</div>
+      <div class="quiz-options" id="quiz-options">
+        ${q.options.map((op) => `<button class="quiz-option" data-v="${esc(op)}">${op}</button>`).join('')}
+      </div>
+      <div class="quiz-feedback" id="quiz-feedback"></div>
+      <div class="game-controls">
+        <button class="btn btn-primary" id="quiz-next" style="display:none;">${G.qIdx === G.quiz.length - 1 ? '🏁 看成绩' : '下一题 👉'}</button>
+      </div>
+    </div>
+  `;
+  document.querySelectorAll('.quiz-option').forEach(btn => {
+    btn.addEventListener('click', () => answerQuiz(btn, q));
+  });
+}
+
+function answerQuiz(btn, q) {
+  if (G.answered) return;
+  G.answered = true;
+  const correct = btn.dataset.v === q.card.en;
+  if (correct) {
+    btn.classList.add('correct');
+    G.score++;
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('.quiz-option').forEach(b => {
+      if (b.dataset.v === q.card.en) b.classList.add('correct');
+    });
+    G.errors.push({ en: q.card.en, cn: q.card.cn });
+  }
+  document.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
+  document.getElementById('quiz-feedback').textContent = correct ? '✅ 答对了！' : `❌ 正确答案：${q.card.en}`;
+  document.getElementById('quiz-next').style.display = 'block';
+  document.getElementById('quiz-next').onclick = () => {
+    G.qIdx++;
+    G.answered = false;
+    renderQuizQ();
+  };
+}
+
+function showGameResult() {
+  const stage = document.getElementById('game-stage');
+  const total = G.quiz.length;
+  const pct = Math.round(G.score / total * 100);
+  const emoji = pct >= 90 ? '🏆' : pct >= 70 ? '🎉' : pct >= 50 ? '💪' : '📚';
+  const title = pct >= 90 ? '太棒了！' : pct >= 70 ? '很不错！' : pct >= 50 ? '继续加油！' : '再学一遍吧';
+  stage.innerHTML = `
+    <div class="result-wrap">
+      <div class="result-emoji">${emoji}</div>
+      <div class="result-title">${title}</div>
+      <div class="result-score">${G.score} / ${total}</div>
+      <div class="result-sub">正确率 ${pct}% · ${LIFE_SCENES[G.scene].emoji} ${LIFE_SCENES[G.scene].name}</div>
+      ${G.errors.length ? `
+        <div class="result-errors">
+          <div class="result-errors-title">📌 再记一下这些：</div>
+          ${G.errors.map(e => `<div class="result-error-item">❌ <b>${e.en}</b> — ${e.cn}</div>`).join('')}
+        </div>` : ''}
+      <div class="result-actions">
+        <button class="btn" id="result-again">🔁 再玩一次</button>
+        <button class="btn btn-primary" id="result-relearn">📖 重新学习</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('result-again').onclick = () => startQuiz();
+  document.getElementById('result-relearn').onclick = () => startGame(G.scene);
+}
+
+function renderGamePick() {
+  const stage = document.getElementById('game-stage');
+  const list = Object.entries(LIFE_SCENES).slice(0, 12);
+  stage.innerHTML = `
+    <div class="game-pick">
+      <div class="game-pick-title">🎮 场景学习小游戏</div>
+      <div class="game-pick-sub">选一个场景 → 翻卡片学习 → 测试练习打分</div>
+      <div class="game-pick-grid">
+        ${list.map(([k, v]) => `
+          <div class="game-pick-item" data-key="${k}">
+            <span class="game-pick-emoji">${v.emoji}</span>
+            <div class="game-pick-name">${v.name}</div>
+            <div class="game-pick-count">${v.nouns.length + v.actions.length} 张卡片</div>
+          </div>`).join('')}
+      </div>
+    </div>
+  `;
+  stage.querySelectorAll('.game-pick-item').forEach(el => {
+    el.addEventListener('click', () => {
+      G.scene = el.dataset.key;
+      renderGameSceneChips();
+      startGame(G.scene);
+    });
+  });
+}
+
+/* ============================================================
+   📷 看图学词（真实场景图：名词看图认 + 动词看图猜）
+   ============================================================ */
+const LOOK = { scene: null, view: 'explore', vIdx: 0, revealed: false, hotKey: null, extTab: 'use' };
+
+function renderLookSceneChips() {
+  const chips = document.getElementById('look-scene-chips');
+  if (!chips) return;
+  chips.innerHTML = Object.entries(LOOK_LEARN).map(([k, v]) =>
+    `<div class="cat-chip ${k === LOOK.scene ? 'active' : ''}" data-key="${k}">${v.emoji} ${v.name}</div>`
+  ).join('');
+  chips.querySelectorAll('.cat-chip').forEach(el => {
+    el.addEventListener('click', () => {
+      LOOK.scene = el.dataset.key;
+      LOOK.vIdx = 0;
+      LOOK.revealed = false;
+      renderLookSceneChips();
+      renderLookStage();
+    });
+  });
+}
+
+function renderLookStage() {
+  const stage = document.getElementById('look-stage');
+  if (!stage) return;
+  if (!LOOK.scene || !LOOK_LEARN[LOOK.scene]) {
+    LOOK.scene = Object.keys(LOOK_LEARN)[0];
+    LOOK.hotKey = null;
+    LOOK.extTab = 'use';
+  }
+  const s = LOOK_LEARN[LOOK.scene];
+  const hasExplore = !!s.explore;
+
+  // view 切换器
+  let html = `
+    <div class="look-view-tabs">
+      <div class="look-view-tab ${LOOK.view === 'explore' ? 'active' : ''}" data-view="explore">🗺️ 场景探索</div>
+      <div class="look-view-tab ${LOOK.view === 'verbs' ? 'active' : ''}" data-view="verbs">🎯 动作猜猜</div>
+      <div style="margin-left:auto; font-size:11px; color:var(--text-soft); align-self:center;">💡 ${LOOK.view === 'explore' ? '点图上红点 → 弹延伸卡 → 层层点' : '看图先想答案，点一下验证'}</div>
+    </div>
+  `;
+
+  if (LOOK.view === 'explore' && hasExplore) {
+    const ex = s.explore;
+    const hot = LOOK.hotKey ? ex.hotspots.find(h => h.en === LOOK.hotKey) : null;
+    html += `
+      <div class="look-explore-wrap">
+        <!-- 左侧：场景图 + 热点 -->
+        <div class="look-explore-img-wrap">
+          <img class="look-explore-img" src="${ex.img}" alt="${s.name}">
+          ${ex.hotspots.map((h, i) => `
+            <div class="hotspot ${LOOK.hotKey === h.en ? 'active' : ''}" data-key="${h.en}" style="left:${h.x}%; top:${h.y}%;">
+              ${h.emoji}
+              <span class="hotspot-num">${i + 1}</span>
+            </div>`).join('')}
+        </div>
+        <!-- 右侧：延伸卡 -->
+        <div class="look-explore-card">
+          ${hot ? renderExtendCard(hot, ex) : `
+            <div class="explore-card-empty">
+              <div class="empty-emoji">👈</div>
+              <div style="font-size:16px; font-weight:600; color:var(--text); margin-bottom:6px;">点图上的红点开始探索</div>
+              <div>每个红点对应一个物品<br>点开后能看怎么用、例句、相关词</div>
+            </div>
+          `}
+        </div>
+      </div>
+    `;
+  } else if (LOOK.view === 'explore' && !hasExplore) {
+    html += `<div style="text-align:center; padding:60px 20px; color:var(--text-soft); background:#fafbfc; border-radius:12px;">🗺️ 该场景暂无「场景探索」模式<br><span style="font-size:12px;">（需要先配一张真实场景图 + 热点标记）</span><br><br>试试「🎯 动作猜猜」→</div>`;
+  }
+
+  if (LOOK.view === 'verbs') {
+    if (LOOK.vIdx >= s.verbs.length) LOOK.vIdx = 0;
+    const v = s.verbs[LOOK.vIdx];
+    html += `
+      <div class="look-section">
+        <div class="look-section-title">🎯 动词短语 · 看图猜一猜 <span class="look-section-sub">先想答案，点一下验证</span></div>
+        <div class="look-verb-header">
+          <span class="look-verb-progress">${LOOK.vIdx + 1} / ${s.verbs.length}</span>
+        </div>
+        <div class="look-verb-img-wrap"><img class="look-verb-img" src="${v.img}" alt="action"></div>
+        <div class="look-question">${v.q}</div>
+        ${LOOK.revealed ? `
+          <div class="look-answer">
+            <div class="look-answer-en">${v.en}</div>
+            <div class="look-answer-cn">${v.cn}</div>
+            ${v.ex ? `<div class="look-ex"><div class="look-ex-en">💬 ${v.ex.en}</div><div class="look-ex-cn">${v.ex.cn}</div></div>` : ''}
+            ${v.tip ? `<div class="look-tip">💡 ${v.tip}</div>` : ''}
+          </div>
+          <div class="look-verb-actions"><button class="btn btn-primary" id="look-next-verb">${LOOK.vIdx === s.verbs.length - 1 ? '🔄 重新开始' : '下一题 👉'}</button></div>
+        ` : `<button class="look-reveal-btn" id="look-reveal">👆 点我显示答案</button>`}
+      </div>
+    `;
+  }
+
+  stage.innerHTML = html;
+
+  // 事件绑定
+  stage.querySelectorAll('.look-view-tab').forEach(t => {
+    t.addEventListener('click', () => {
+      LOOK.view = t.dataset.view;
+      if (LOOK.view === 'verbs') { LOOK.vIdx = 0; LOOK.revealed = false; }
+      renderLookStage();
+    });
+  });
+  stage.querySelectorAll('.hotspot').forEach(h => {
+    h.addEventListener('click', () => {
+      LOOK.hotKey = h.dataset.key;
+      LOOK.extTab = 'use';
+      renderLookStage();
+    });
+  });
+  stage.querySelectorAll('.explore-tab').forEach(t => {
+    t.addEventListener('click', () => { LOOK.extTab = t.dataset.tab; renderLookStage(); });
+  });
+  stage.querySelectorAll('.related-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      LOOK.hotKey = c.dataset.key;
+      LOOK.extTab = 'use';
+      renderLookStage();
+    });
+  });
+  stage.querySelectorAll('.use-img-thumb').forEach(im => {
+    im.addEventListener('click', () => window.open(im.src, '_blank'));
+  });
+  const reveal = document.getElementById('look-reveal');
+  if (reveal) {
+    reveal.addEventListener('click', () => { LOOK.revealed = true; renderLookStage(); });
+  }
+  const next = document.getElementById('look-next-verb');
+  if (next) {
+    next.addEventListener('click', () => {
+      if (LOOK.vIdx < s.verbs.length - 1) { LOOK.vIdx++; LOOK.revealed = false; }
+      else { LOOK.vIdx = 0; LOOK.revealed = false; }
+      renderLookStage();
+    });
+  }
+}
+
+function renderExtendCard(hot, ex) {
+  const e = hot.extend;
+  const tabs = [
+    { key: 'use', label: '👆 怎么用', items: e.use },
+    { key: 'examples', label: '💬 例句', items: e.examples },
+    { key: 'related', label: '🔁 相关词', items: e.related },
+    { key: 'tip', label: '💡 贴士', items: null }
+  ];
+  let body = '';
+  if (LOOK.extTab === 'use') {
+    body = e.use.length ? e.use.map(u => `
+      <div class="use-item">
+        <div class="use-en">${u.en}</div>
+        <div class="use-cn">${u.cn}</div>
+        ${u.img ? `<img class="use-img-thumb" src="${u.img}" alt="action">` : ''}
+      </div>`).join('') : '<div class="empty-related">暂无</div>';
+  } else if (LOOK.extTab === 'examples') {
+    body = e.examples.length ? e.examples.map(x => `
+      <div class="ex-item">
+        <div style="font-weight:500; font-size:13px;">${x.en}</div>
+        <div style="font-size:11px; color:var(--text-light); margin-top:3px;">${x.cn}</div>
+      </div>`).join('') : '<div class="empty-related">暂无</div>';
+  } else if (LOOK.extTab === 'related') {
+    body = e.related.length ? `<div class="related-wrap">${
+      e.related.map(r => {
+        const h = ex.hotspots.find(h => h.en === r);
+        return h ? `<div class="related-chip" data-key="${r}">${h.emoji} ${r}</div>` : '';
+      }).join('')
+    }</div><div style="font-size:11px; color:var(--text-soft); margin-top:8px;">💡 点相关词跳到那个物品</div>` : '<div class="empty-related">暂无</div>';
+  } else if (LOOK.extTab === 'tip') {
+    body = `<div class="tip-box">${e.tip || '暂无'}</div>`;
+  }
+
+  return `
+    <div class="explore-card-head">
+      <div class="explore-card-emoji">${hot.emoji}</div>
+      <div>
+        <div class="explore-card-en">${hot.en}</div>
+        <div class="explore-card-cn">${hot.cn}</div>
+      </div>
+    </div>
+    <div class="explore-tabs">
+      ${tabs.map(t => `<div class="explore-tab ${LOOK.extTab === t.key ? 'active' : ''}" data-tab="${t.key}">${t.label}${t.items ? `<span class="explore-tab-count">${t.items.length}</span>` : ''}</div>`).join('')}
+    </div>
+    <div class="explore-content">${body}</div>
+  `;
+}
+
+/* ============================================================
+   🎯 事件
+   ============================================================ */
+function bindEvents() {
+  // tab 切换
+  document.querySelectorAll('.main-tab').forEach(t => {
+    t.addEventListener('click', () => switchTab(t.dataset.tab));
+  });
+
+  // 词库筛选
+  document.querySelectorAll('.level-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      state.level = chip.dataset.level;
+      state.page = 0;
+      document.querySelectorAll('.level-chip').forEach(c => c.classList.toggle('active', c.dataset.level === state.level));
+      saveState();
+      renderAll();
+    });
+  });
+
+  document.getElementById('list-search').addEventListener('input', renderSidebar);
+
+  // 词根模式
+  document.getElementById('btn-shuffle').addEventListener('click', () => {
+    const keys = Object.keys(ROOTS);
+    state.currentRoot = keys[Math.floor(Math.random() * keys.length)];
+    state.reviewMode = false; state.page = 0;
+    renderAll();
+  });
+  document.getElementById('btn-review').addEventListener('click', () => {
+    if (state.reviewMode) { state.reviewMode = false; state.page = 0; renderMindmap(); showToast('已退出复习'); return; }
+    const unmastered = getFilteredRootWords(state.currentRoot).filter(w => !isMastered(w.word));
+    if (unmastered.length === 0) { showToast('🎉 没有需要复习的'); return; }
+    state.reviewMode = true; state.page = 0; renderMindmap();
+    showToast('📝 复习模式：' + unmastered.length + ' 词');
+  });
+  document.getElementById('btn-prev').onclick = () => { if (state.page > 0) { state.page--; renderMindmap(); } };
+  document.getElementById('btn-next').onclick = () => {
+    const total = Math.max(1, Math.ceil(getFilteredRootWords(state.currentRoot).length / PAGE_SIZE));
+    if (state.page < total - 1) { state.page++; renderMindmap(); }
+  };
+
+  // 缩放
+  document.querySelectorAll('.zoom-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      const svg = document.getElementById('mindmap');
+      let vb = svg.getAttribute('viewBox').split(' ').map(Number);
+      const cx = vb[0] + vb[2] / 2, cy = vb[1] + vb[3] / 2;
+      let scale = 1;
+      if (b.dataset.zoom === 'in') scale = 0.8;
+      else if (b.dataset.zoom === 'out') scale = 1.25;
+      else { svg.setAttribute('viewBox', '0 0 1200 800'); return; }
+      vb = [cx - vb[2] * scale / 2, cy - vb[3] * scale / 2, vb[2] * scale, vb[3] * scale];
+      svg.setAttribute('viewBox', vb.join(' '));
+    });
+  });
+  // SVG 拖拽
+  const svg = document.getElementById('mindmap');
+  let drag = null;
+  svg.addEventListener('mousedown', (e) => {
+    if (e.target.closest('.node-group')) return;
+    drag = { sx: e.clientX, sy: e.clientY, vb: svg.getAttribute('viewBox').split(' ').map(Number) };
+    svg.classList.add('dragging');
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!drag) return;
+    const dx = (e.clientX - drag.sx) * drag.vb[2] / svg.clientWidth;
+    const dy = (e.clientY - drag.sy) * drag.vb[3] / svg.clientHeight;
+    svg.setAttribute('viewBox', `${drag.vb[0] - dx} ${drag.vb[1] - dy} ${drag.vb[2]} ${drag.vb[3]}`);
+  });
+  window.addEventListener('mouseup', () => { drag = null; svg.classList.remove('dragging'); });
+
+  // 场景模式（新版：file-input/btn-sample 已删除旧 UI）
+  // 这里不再绑定 file-input / btn-sample（旧元素已移除）
+
+  // 我的词库
+  document.getElementById('btn-import').addEventListener('click', () => document.getElementById('import-modal').classList.add('open'));
+  document.getElementById('import-close').addEventListener('click', () => document.getElementById('import-modal').classList.remove('open'));
+  document.getElementById('import-clear').addEventListener('click', () => document.getElementById('import-text').value = '');
+  document.getElementById('import-confirm').addEventListener('click', () => {
+    const text = document.getElementById('import-text').value;
+    const n = importWords(text);
+    document.getElementById('import-modal').classList.remove('open');
+    document.getElementById('import-text').value = '';
+    renderAll();
+    showToast(n > 0 ? `✅ 成功导入 ${n} 个单词` : '⚠️ 没有新词（可能重复或格式错误）');
+  });
+  document.getElementById('btn-review-due').addEventListener('click', () => {
+    const due = state.customWords.filter(w => isDue(w.word));
+    if (due.length === 0) { showToast('🎉 今日复习完成！'); return; }
+    showWordDetail(due[0], 'custom');
+    showToast(`🔥 今日待复习 ${due.length} 个，开始吧`);
+  });
+  document.getElementById('btn-export').addEventListener('click', exportData);
+
+  // 🎬 语料提炼中心
+  const drop = document.getElementById('corpus-drop');
+  const fileInput = document.getElementById('corpus-file');
+  drop.addEventListener('click', () => fileInput.click());
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.classList.remove('dragover');
+    if (e.dataTransfer.files.length) handleCorpusFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', e => {
+    if (e.target.files.length) handleCorpusFiles(e.target.files);
+    e.target.value = '';
+  });
+  document.getElementById('corpus-export').addEventListener('click', exportCorpusJson);
+  document.getElementById('corpus-to-ai').addEventListener('click', () => {
+    showToast('📁 把 .srt 文件丢到 C:\\Users\\15869\\Desktop\\文件\\WJ\\en\\生活场景\\，然后跟阿智说「有新语料」即可批量提炼');
+  });
+
+  // 卡片工坊
+  document.getElementById('card-fab').addEventListener('click', () => openCardOverlay());
+  document.getElementById('card-overlay-close').addEventListener('click', closeCardOverlay);
+  document.getElementById('btn-download-card').addEventListener('click', downloadCard);
+  document.getElementById('card-style').addEventListener('change', (e) => {
+    state.cardStyle = e.target.value;
+    renderCard();
+  });
+
+  // 场景互动 viewer（侧边栏场景列表打开）
+  const vc = document.getElementById('viewer-close');
+  if (vc) vc.addEventListener('click', closeSceneViewer);
+  const sv = document.getElementById('scene-viewer');
+  if (sv) sv.addEventListener('click', (e) => {
+    if (e.target.id === 'scene-viewer') closeSceneViewer();
+  });
+}
+
+function init() {
+  loadState();
+  if (!state.currentLife) state.currentLife = Object.keys(LIFE_SCENES)[0];
+  document.querySelectorAll('.level-chip').forEach(c => c.classList.toggle('active', c.dataset.level === state.level));
+  bindEvents();
+  renderAll();
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

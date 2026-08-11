@@ -1,0 +1,17 @@
+# 临时/生成文件
+.check_tmp.js
+__pycache__/
+*.pyc
+
+# 语料解析产物（可由 parse_srt.py 重新生成）
+corpus/*.txt
+corpus/keywords.json
+corpus/summary.json
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

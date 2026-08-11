@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📥 YouTube 语料下载清单 · 场景词库补全计划</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#f4f6f9; color:#2c3e50; padding:24px 16px 60px; }
+  .wrap { max-width:960px; margin:0 auto; }
+  .header { background:linear-gradient(135deg,#ff6b6b 0%,#ff8e53 100%); color:#fff; border-radius:18px; padding:26px 30px; margin-bottom:20px; box-shadow:0 10px 30px rgba(255,107,107,.3); }
+  .header h1 { font-size:26px; margin-bottom:8px; }
+  .header p { font-size:14px; opacity:.95; line-height:1.7; }
+  .header .steps { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+  .header .steps span { background:rgba(255,255,255,.2); padding:5px 12px; border-radius:16px; font-size:12px; }
+  .progress-bar { background:#fff; border-radius:14px; padding:16px 22px; margin-bottom:20px; box-shadow:0 3px 12px rgba(0,0,0,.06); display:flex; align-items:center; gap:18px; }
+  .progress-num { font-size:30px; font-weight:800; color:#ff6b6b; min-width:70px; }
+  .progress-num small { font-size:14px; color:#95a5a6; font-weight:400; }
+  .bar-track { flex:1; height:12px; background:#ecf0f1; border-radius:8px; overflow:hidden; }
+  .bar-fill { height:100%; background:linear-gradient(90deg,#ff6b6b,#ff8e53); border-radius:8px; transition:width .3s; width:0%; }
+  .bar-label { font-size:12px; color:#7f8c8d; min-width:120px; text-align:right; }
+  .cat { background:#fff; border-radius:14px; margin-bottom:14px; box-shadow:0 3px 12px rgba(0,0,0,.05); overflow:hidden; }
+  .cat-head { display:flex; align-items:center; gap:12px; padding:14px 20px; cursor:pointer; user-select:none; }
+  .cat-head:hover { background:#fafbfc; }
+  .cat-emoji { font-size:24px; }
+  .cat-name { font-size:16px; font-weight:700; flex:1; }
+  .cat-count { font-size:12px; color:#95a5a6; background:#f0f3f8; padding:3px 10px; border-radius:12px; }
+  .cat-arrow { color:#bdc3c7; transition:transform .2s; }
+  .cat.open .cat-arrow { transform:rotate(90deg); }
+  .cat-body { display:none; padding:4px 20px 18px; border-top:1px solid #f0f3f8; }
+  .cat.open .cat-body { display:block; }
+  .main-video { background:#fff7f0; border:1.5px solid #ffd9c0; border-radius:10px; padding:10px 14px; margin:12px 0; }
+  .main-video .label { font-size:11px; color:#e67e22; font-weight:700; margin-bottom:6px; }
+  .kw { display:inline-block; background:#fff; border:1.5px solid #ffd9c0; color:#e67e22; padding:5px 12px; border-radius:16px; font-size:12px; margin:3px; cursor:pointer; transition:all .15s; font-family:"SF Mono",Consolas,monospace; }
+  .kw:hover { background:#e67e22; color:#fff; }
+  .kw:active { transform:scale(.95); }
+  .scene-row { display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px dashed #f0f3f8; }
+  .scene-row:last-child { border-bottom:none; }
+  .scene-row input[type=checkbox] { width:18px; height:18px; accent-color:#ff6b6b; cursor:pointer; flex-shrink:0; }
+  .scene-name { font-size:14px; font-weight:600; min-width:90px; }
+  .scene-name.done { color:#bdc3c7; text-decoration:line-through; }
+  .scene-kws { flex:1; }
+  .scene-kw { font-size:12px; color:#7f8c8d; }
+  .scene-dl { font-size:11px; color:#95a5a6; }
+  .footer { text-align:center; color:#95a5a6; font-size:12px; margin-top:24px; line-height:1.8; }
+  .footer b { color:#7f8c8d; }
+  .btn-clear { background:#fff; border:1.5px solid #e0e4e8; color:#95a5a6; padding:6px 14px; border-radius:14px; cursor:pointer; font-size:12px; }
+  .btn-clear:hover { border-color:#ff6b6b; color:#ff6b6b; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>📥 YouTube 语料下载清单</h1>
+    <p>每个场景配了搜索关键词，找带<b>英文字幕（最好中英双语）</b>的视频，用 yt-dlp / 下载工具扒下 .srt<br>
+    下载后统一丢进 <b>C:\Users\15869\Desktop\文件\WJ\en\生活场景\</b>，跟阿智说一声「有新语料」，批量提炼入库。</p>
+    <div class="steps">
+      <span>① 按清单搜索视频</span><span>② 下载 SRT 字幕</span><span>③ 丢进语料文件夹</span><span>④ 我来提炼</span>
+    </div>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-num"><span id="p-num">0</span><small> / <span id="p-total">0</span></small></div>
+    <div class="bar-track"><div class="bar-fill" id="p-bar"></div></div>
+    <div class="bar-label" id="p-label">还没下载</div>
+    <button class="btn-clear" id="btn-clear">清空进度</button>
+  </div>
+
+  <div id="cats"></div>
+
+  <div class="footer">
+    💡 <b>小技巧</b>：一个视频常覆盖整类场景，优先下「主视频」推荐词，一集顶好几个场景<br>
+    🔍 优先选 <b>English with Lucy / Easy English / English in Action / Daily English Conversation</b> 这类教学频道，字幕规范<br>
+    🎬 有了真实语料，场景内容会全部替换成视频里的地道表达
+  </div>
+</div>
+
+<script>
+const DATA = [
+  { key:"cooking", emoji:"🍳", name:"厨房烹饪", main:["kitchen vocabulary english","cooking verbs daily english","english in the kitchen"],
+    scenes:[
+      ["煮鸡蛋","how to boil eggs english cooking"],
+      ["切西瓜","cut watermelon english kitchen"],
+      ["泡茶","how to make tea english"],
+      ["冲咖啡","make coffee at home english"],
+      ["煮米饭","how to cook rice english"],
+      ["切菜","chopping vegetables english"],
+      ["洗水果","washing fruit kitchen english"],
+      ["煲汤","how to make soup english"],
+      ["洗碗","washing dishes english vocabulary"]
+    ]},
+  { key:"cooking2", emoji:"🍜", name:"烹饪进阶", main:["cooking verbs in english","advanced cooking english"],
+    scenes:[
+      ["炒菜","how to stir fry english"],
+      ["蒸菜","steaming vegetables english"],
+      ["烘焙","baking vocabulary english"],
+      ["做沙拉","making a salad english"],
+      ["包饺子","how to make dumplings english"],
+      ["烧烤","barbecue english vocabulary"],
+      ["煮面","cooking noodles english"]
+    ]},
+  { key:"breakfast", emoji:"🥐", name:"早餐时光", main:["making breakfast english","breakfast vocabulary english"],
+    scenes:[
+      ["做早餐","making breakfast daily english"],
+      ["榨果汁","make fresh juice english"],
+      ["烤吐司","toast jam english breakfast"]
+    ]},
+  { key:"dining", emoji:"🍽️", name:"餐厅用餐", main:["ordering food at a restaurant english","restaurant english conversation"],
+    scenes:[
+      ["点餐","order food restaurant english"],
+      ["买单","paying the bill restaurant english"],
+      ["订座","book a table restaurant english"],
+      ["吃火锅","hotpot english vocabulary"]
+    ]},
+  { key:"home", emoji:"🏠", name:"居家日常", main:["daily routine at home english","housework english vocabulary"],
+    scenes:[
+      ["整理床铺","make the bed english"],
+      ["叠衣服","fold clothes english"],
+      ["扫地","sweeping the floor english"],
+      ["倒垃圾","take out the trash english"],
+      ["收快递","receive a package english"],
+      ["浇花","watering plants english"]
+    ]},
+  { key:"hygiene", emoji:"🧼", name:"洗漱清洁", main:["morning routine bathroom english","bathroom vocabulary english"],
+    scenes:[
+      ["洗手","wash hands english"],
+      ["刷牙","brushing teeth english"],
+      ["洗脸","wash face daily english"],
+      ["洗澡","taking a shower english"],
+      ["梳头","brushing hair english"]
+    ]},
+  { key:"dressing", emoji:"👕", name:"穿衣打扮", main:["getting dressed english","clothes vocabulary english"],
+    scenes:[
+      ["穿衣服","get dressed english"],
+      ["熨衣服","ironing clothes english"],
+      ["打领带","tie a tie english"]
+    ]},
+  { key:"laundry", emoji:"🧺", name:"洗衣家务", main:["doing laundry english","laundry vocabulary english"],
+    scenes:[
+      ["洗衣服","do the laundry english"],
+      ["晾衣服","hang clothes to dry english"],
+      ["缝扣子","sew on a button english"]
+    ]},
+  { key:"transport", emoji:"🚇", name:"出行交通", main:["taking the subway english","public transport english conversation"],
+    scenes:[
+      ["坐地铁","subway english vocabulary"],
+      ["坐公交","taking the bus english"],
+      ["打车","taking a taxi english"],
+      ["骑自行车","riding a bike english"],
+      ["过马路","crossing the street english"]
+    ]},
+  { key:"travel", emoji:"✈️", name:"旅行度假", main:["airport english conversation","checking in at a hotel english"],
+    scenes:[
+      ["酒店入住","hotel check in english"],
+      ["登机","boarding a plane english"],
+      ["过海关","going through customs english"],
+      ["取行李","claiming luggage english"],
+      ["租车","renting a car english"]
+    ]},
+  { key:"shopping", emoji:"🛒", name:"购物消费", main:["shopping english conversation","shopping mall english"],
+    scenes:[
+      ["网购","online shopping english"],
+      ["试衣服","trying on clothes english"],
+      ["退货","returning items english"],
+      ["砍价","bargaining in english"]
+    ]},
+  { key:"school", emoji:"🎒", name:"校园学习", main:["school vocabulary english","university life english"],
+    scenes:[
+      ["上课","classroom english"],
+      ["借书","library english conversation"],
+      ["写作业","homework english"],
+      ["考试","taking an exam english"]
+    ]},
+  { key:"office", emoji:"💼", name:"办公工作", main:["office english daily","business english conversation"],
+    scenes:[
+      ["开早会","morning meeting english"],
+      ["写邮件","business email english"],
+      ["做PPT","presentation english"],
+      ["打印","printer office english"]
+    ]},
+  { key:"hospital", emoji:"🏥", name:"医院就医", main:["at the doctor english conversation","hospital english vocabulary"],
+    scenes:[
+      ["挂号","registering at hospital english"],
+      ["看医生","seeing a doctor english"],
+      ["取药","getting medicine pharmacy english"],
+      ["体检","physical checkup english"]
+    ]},
+  { key:"health", emoji:"🌿", name:"健康养生", main:["health english vocabulary","healthy lifestyle english"],
+    scenes:[
+      ["体检","health checkup english"],
+      ["养生","healthy habits english"],
+      ["睡眠","sleep english vocabulary"]
+    ]},
+  { key:"fitness", emoji:"🏋️", name:"运动健身", main:["gym english vocabulary","workout english"],
+    scenes:[
+      ["跑步","running english vocabulary"],
+      ["举铁","lifting weights gym english"],
+      ["做瑜伽","yoga english class"],
+      ["拉伸","stretching english"]
+    ]},
+  { key:"garden", emoji:"🌻", name:"园艺种植", main:["gardening english vocabulary","garden work english"],
+    scenes:[
+      ["种花","planting flowers english"],
+      ["浇水","watering the garden english"],
+      ["修剪","pruning plants english"]
+    ]},
+  { key:"pets", emoji:"🐶", name:"宠物陪伴", main:["pet care english","taking care of a dog english"],
+    scenes:[
+      ["遛狗","walking the dog english"],
+      ["喂猫","feeding the cat english"],
+      ["给宠物洗澡","bathing a pet english"],
+      ["铲猫砂","cleaning litter box english"]
+    ]},
+  { key:"weather", emoji:"🌦️", name:"天气季节", main:["weather vocabulary english","weather report english"],
+    scenes:[
+      ["下雨","rainy day english"],
+      ["下雪","snowy weather english"],
+      ["看天气预报","weather forecast english"]
+    ]},
+  { key:"festival", emoji:"🎄", name:"节日庆祝", main:["festival english vocabulary","christmas english vocabulary"],
+    scenes:[
+      ["过圣诞","christmas celebration english"],
+      ["过春节","spring festival english"],
+      ["过生日","birthday party english"],
+      ["跨年","new year celebration english"]
+    ]},
+  { key:"entertainment", emoji:"🎬", name:"娱乐休闲", main:["entertainment english","free time hobbies english"],
+    scenes:[
+      ["看电影","going to the movies english"],
+      ["打游戏","playing video games english"],
+      ["唱歌","singing karaoke english"]
+    ]},
+  { key:"digital", emoji:"📱", name:"数码科技", main:["smartphone english vocabulary","tech vocabulary english"],
+    scenes:[
+      ["玩手机","smartphone features english"],
+      ["用电脑","computer english vocabulary"],
+      ["充电","charging devices english"]
+    ]},
+  { key:"organizing", emoji:"🗂️", name:"收纳整理", main:["decluttering english","organizing your home english"],
+    scenes:[
+      ["收纳整理","organizing closet english"],
+      ["整理房间","tidying up room english"],
+      ["断舍离","minimalism declutter english"]
+    ]},
+  { key:"beauty", emoji:"💄", name:"美容美妆", main:["beauty salon english","skincare english vocabulary"],
+    scenes:[
+      ["美甲","nail salon english"],
+      ["护肤","skincare routine english"],
+      ["染发","hair coloring salon english"]
+    ]},
+  { key:"car", emoji:"🚗", name:"汽车出行", main:["car vocabulary english","driving english"],
+    scenes:[
+      ["开车","driving a car english"],
+      ["洗车","washing the car english"],
+      ["加油","gas station english"]
+    ]},
+  { key:"courier", emoji:"📦", name:"快递物流", main:["receiving a package english","delivery english conversation"],
+    scenes:[
+      ["取快递","getting a package english"],
+      ["寄快递","sending a parcel english"]
+    ]},
+  { key:"social", emoji:"🤝", name:"社交往来", main:["small talk english","meeting new people english"],
+    scenes:[
+      ["打招呼","greetings small talk english"],
+      ["聊天","chit chat english conversation"],
+      ["聚会","hanging out with friends english"]
+    ]},
+  { key:"repair", emoji:"🔧", name:"修理维护", main:["home repair english","fixing things english"],
+    scenes:[
+      ["修东西","fixing things at home english"],
+      ["换灯泡","changing a light bulb english"]
+    ]}
+];
+
+let done = {};
+try { done = JSON.parse(localStorage.getItem('corpus_wishlist') || '{}'); } catch(e) {}
+
+const catsEl = document.getElementById('cats');
+function render() {
+  let total = 0, got = 0;
+  catsEl.innerHTML = DATA.map((c, ci) => {
+    let cGot = 0;
+    const rows = c.scenes.map(([name, kw], si) => {
+      const key = c.key + '/' + name;
+      if (done[key]) cGot++;
+      total++; if (done[key]) got++;
+      return `<div class="scene-row">
+        <input type="checkbox" data-key="${key}" ${done[key] ? 'checked' : ''}>
+        <div class="scene-name ${done[key] ? 'done' : ''}">${name}</div>
+        <div class="scene-kws"><span class="scene-kw">🔍 ${kw}</span></div>
+        <div class="scene-dl">${done[key] ? '✅ 已下载' : '待下载'}</div>
+      </div>`;
+    }).join('');
+    const mainKws = c.main.map(m => `<span class="kw" data-copy="${m}">${m}</span>`).join(' ');
+    return `<div class="cat" id="cat-${ci}">
+      <div class="cat-head" onclick="document.getElementById('cat-${ci}').classList.toggle('open')">
+        <span class="cat-emoji">${c.emoji}</span>
+        <span class="cat-name">${c.name}</span>
+        <span class="cat-count">${cGot}/${c.scenes.length}</span>
+        <span class="cat-arrow">▶</span>
+      </div>
+      <div class="cat-body">
+        <div class="main-video"><div class="label">🎯 推荐主视频（一集覆盖整类，优先下）</div>${mainKws}</div>
+        ${rows}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('p-num').textContent = got;
+  document.getElementById('p-total').textContent = total;
+  document.getElementById('p-bar').style.width = (total ? got / total * 100 : 0) + '%';
+  document.getElementById('p-label').textContent = got === 0 ? '还没开始，加油！' : got === total ? '🎉 全部搞定，等阿智提炼！' : '继续下载中…';
+}
+render();
+
+document.addEventListener('change', e => {
+  if (e.target.matches('.scene-row input')) {
+    done[e.target.dataset.key] = e.target.checked;
+    localStorage.setItem('corpus_wishlist', JSON.stringify(done));
+    render();
+  }
+});
+
+document.querySelectorAll('.kw').forEach(k => {
+  k.addEventListener('click', () => {
+    const t = k.dataset.copy;
+    navigator.clipboard.writeText(t).then(() => {
+      k.textContent = '✅ 已复制';
+      setTimeout(() => { k.textContent = t; }, 1200);
+    });
+  });
+});
+
+document.getElementById('btn-clear').addEventListener('click', () => {
+  if (confirm('确定清空所有下载进度？')) {
+    done = {}; localStorage.removeItem('corpus_wishlist'); render();
+  }
+});
+</script>
+</body>
+</html>
