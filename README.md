@@ -34,20 +34,18 @@ python -m http.server 8765
 ## 📂 项目结构
 
 ```
-├── index.html              # 主应用（界面 + 逻辑，约 150KB）
+├── index.html              # 主应用（界面 + 逻辑）
 ├── data.js                 # 词根词缀 + 雅思主题 + 听力场景词库（30 词根 248 词 + 10 主题 123 词 + 16 场景 210 词）
-├── life.js / life2.js / life3.js / life4.js
-│                           # 生活微场景（28 分类 113 场景），life4 含 YouTube 语料提炼场景
+├── life.js                 # 生活微场景（28 分类 113 场景，含 YouTube 语料提炼场景）
 ├── look.js                 # 看图学词数据（写实照片场景 + 名词/动词 + 场景探索热点词网）
 ├── map.js                  # 场景思维导图（DEMO × 5）
 ├── images.js               # 场景图片映射
-├── images/                 # AI 生成的场景照片（写实风）
+├── images/                 # AI 生成的场景照片（写实风 JPG）
 │   └── look/               # 看图学词专属照片（每张角度/道具不同）
 ├── corpus-wishlist.html    # YouTube 语料下载清单（28 分类 × 109 场景搜索词，可勾选进度）
-├── parse_srt.py            # SRT 双语字幕解析工具（→ corpus/*.txt + summary.json）
+├── parse_srt.py            # SRT 双语字幕解析工具（支持分类子文件夹，→ corpus/*.txt + summary.json）
 ├── analyze_corpus.py       # 词频 + 搭配分析工具（→ keywords.json）
-├── test_srt_parser.js      # 前端 SRT 解析逻辑的单元测试
-└── corpus/                 # 解析产物（txt / keywords / summary）
+└── compress_images.py      # 图片批量压缩工具（PNG → JPG，GitHub 上传前使用）
 ```
 
 ## 🎬 语料工作流（核心方法论）
